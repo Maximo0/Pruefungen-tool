@@ -39,11 +39,10 @@ function taskItem(task) {
   if (!task.expand.kategorien) {
     categoryField = <TableCell>None</TableCell>;
   } else {
-    <TableCell>
-      {task.expand.kategorien.map((kategorie) => {
-        return kategorie.name + ", ";
-      })}
-    </TableCell>;
+    const kategorien = task.expand.kategorien.map((kategorie) => {
+      return kategorie.name;
+    });
+    categoryField = <TableCell>{kategorien.join(", ")}</TableCell>;
   }
 
   return (

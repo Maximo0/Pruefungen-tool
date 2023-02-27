@@ -3,6 +3,7 @@ import {
   Box,
   Button,
   Checkbox,
+  Chip,
   FormControl,
   InputBase,
   InputLabel,
@@ -17,13 +18,32 @@ import { useEffect, useState } from "react";
 import DBTable from "../components/DBTable";
 import Loading from "./loading";
 
+function getCategoryParams(params) {
+  if (params.length <= 0) return "";
+  const query = params.map((param) => `kategorien.name?='${param}'`).join("||");
+  return `&&(${query})`;
+}
+
+function getSemesterParams(params) {
+  console.log(params);
+  if (params.length <= 0) return "";
+  const query = params.map((param) => {
+    console.log(param);
+    param = param.split(" ");
+    return `(semester.semester='${param[0]}'&&semester.jahr=${param[1]})`
+  }).join("||")
+  console.log(`&&(${query})`);
+  return `&&(${query})`;
+}
+
 export default function taskList() {
   const [query, setQuery] = useState("");
   const [categories, setCategories] = useState([]);
   const [selectedCategories, setSelectedCategories] = useState([]);
   const [bereiche, setBereiche] = useState([]);
   const [selectedBereich, setSelectedBereich] = useState("");
-  const [semester, setSemester] = useState([])
+  const [semester, setSemester] = useState([]);
+  const [selectedSemester, setSelectedSemester] = useState([]);
   const [tasks, setTasks] = useState([]);
   const [taskAmount, setTaskAmount] = useState(30);
   const [maxTasks, setMaxTasks] = useState(-1);
@@ -62,19 +82,24 @@ export default function taskList() {
 
   useEffect(() => {
     fetch(`http://127.0.0.1:8090/api/collections/semester/records`)
-    .then((res) => res.json())
-    .then((data) => {
-      setSemester(data?.items)
-    })
-  }, [])
-
+      .then((res) => res.json())
+      .then((data) => {
+        setSemester(data?.items);
+      });
+  }, []);
 
   // Handles everything with the search query
   useEffect(() => {
     // Timer to stop repeated api calls on key press
     const timer = setTimeout(() => {
       fetch(
-        `http://127.0.0.1:8090/api/collections/aufgaben/records?page=1&perPage=${taskAmount}&expand=semester,bereich,kategorien&filter=name~'${query}'`
+        "http://127.0.0.1:8090/api/collections/aufgaben/records?" +
+          new URLSearchParams({
+            page: 1,
+            perPage: taskAmount,
+            expand: "semester,bereich,kategorien",
+            filter: `name~'${query}'&&bereich.name~'${selectedBereich}'${getSemesterParams(selectedSemester)}${getCategoryParams(selectedCategories)}`,
+          })
       )
         .then((res) => res.json())
         .then((data) => {
@@ -86,7 +111,17 @@ export default function taskList() {
     }, 250);
 
     return () => clearTimeout(timer);
-  }, [query, taskAmount]);
+  }, [
+    query,
+    taskAmount,
+    selectedCategories,
+    selectedBereich,
+    selectedSemester,
+  ]);
+
+  useEffect(() => {
+    getSemesterParams(selectedSemester);
+  }, [selectedSemester]);
 
   if (isLoading) return <Loading />;
 
@@ -144,11 +179,39 @@ export default function taskList() {
             list={bereiche}
             selectedItem={selectedBereich}
           />
+
+          <SelectFilter
+            multiSelect={true}
+            // onChange={(e) => {
+            //   setSelectedSemester(e.target.value);
+            // }}
+            onChange={(event) => {
+              const {
+                target: { value },
+              } = event;
+              setSelectedSemester(
+                typeof value === "string" ? value.split(",") : value
+              );
+            }}
+            label="Semester"
+            list={semester}
+            selectedList={selectedSemester}
+          />
+        </Box>
+        <Box>
+          <Typography variant="h6">Selected Filters</Typography>
+          {/* TODO: Add pills for selected filters for easy removal */}
+          {selectedCategories.map((item) => {
+            return <Chip key={item} label={item}/>
+          })}
+          {selectedSemester.map((item) => {
+            return <Chip key={item} label={item}/>
+          })}
         </Box>
       </Box>
       <Container className="tableContent">
         <DBTable data={tasks} />
-        {tasks.length <= maxTasks ? showMoreButtonComponent() : null}
+        {tasks.length < maxTasks ? showMoreButtonComponent() : null}
       </Container>
     </Box>
   );
@@ -189,6 +252,7 @@ function SelectFilter({
           MenuProps={MenuProps}
         >
           {list.map((item) => {
+            if (!item.name) item.name = `${item.semester} ${item.jahr}`;
             return (
               <MenuItem key={item.id} value={item.name}>
                 <Checkbox checked={selectedList.indexOf(item.name) > -1} />
@@ -208,8 +272,10 @@ function SelectFilter({
         label={label}
         value={selectedItem}
         onChange={onChange}
+        MenuProps={MenuProps}
       >
         {list.map((item) => {
+          if (!item.name) item.name = `${item.semester} ${item.jahr}`;
           return (
             <MenuItem key={item.id} value={item.name}>
               {item.name}

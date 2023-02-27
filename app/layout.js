@@ -1,14 +1,23 @@
-import './globals.css'
+"use client";
+/* eslint-disable @next/next/no-head-element */
+import "@fontsource/roboto/300.css";
+import "@fontsource/roboto/400.css";
+import "@fontsource/roboto/500.css";
+import "@fontsource/roboto/700.css";
+import { createTheme, ThemeProvider } from "@mui/material";
+
+const darkTheme = createTheme({
+  palette: {
+    mode: "dark",
+  },
+});
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en">
-      {/*
-        <head /> will contain the components returned by the nearest parent
-        head.js. Find out more at https://beta.nextjs.org/docs/api-reference/file-conventions/head
-      */}
-      <head />
+    <html>
+      <head></head>
       <body>{children}</body>
+      {/* <ThemeProvider theme={darkTheme}>{children}</ThemeProvider> */}
     </html>
-  )
+  );
 }

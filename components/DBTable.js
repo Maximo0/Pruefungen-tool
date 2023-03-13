@@ -10,6 +10,7 @@ import {
   TableRow,
 } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
+import Link from "next/link";
 
 export default function DBTable(props) {
   return (
@@ -52,7 +53,7 @@ function taskItem(task) {
       <TableCell>{task.expand.bereich.name}</TableCell>
       <TableCell>{`${task.expand.semester.semester} ${task.expand.semester.jahr}`}</TableCell>
       <TableCell>
-        <IconButton href={`/edit/${task.id}`}>
+        <IconButton component={Link} href={`/edit/${task.id}`}>
           <EditIcon />
         </IconButton>
       </TableCell>

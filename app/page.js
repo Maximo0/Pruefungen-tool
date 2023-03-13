@@ -7,6 +7,7 @@ import {
   FormControl,
   InputBase,
   InputLabel,
+  List,
   ListItemText,
   MenuItem,
   Paper,
@@ -25,14 +26,16 @@ function getCategoryParams(params) {
 }
 
 function getSemesterParams(params) {
-  console.log(params);
+  // console.log(params);
   if (params.length <= 0) return "";
-  const query = params.map((param) => {
-    console.log(param);
-    param = param.split(" ");
-    return `(semester.semester='${param[0]}'&&semester.jahr=${param[1]})`
-  }).join("||")
-  console.log(`&&(${query})`);
+  const query = params
+    .map((param) => {
+      // console.log(param);
+      param = param.split(" ");
+      return `(semester.semester='${param[0]}'&&semester.jahr=${param[1]})`;
+    })
+    .join("||");
+  // console.log(`&&(${query})`);
   return `&&(${query})`;
 }
 
@@ -98,7 +101,9 @@ export default function taskList() {
             page: 1,
             perPage: taskAmount,
             expand: "semester,bereich,kategorien",
-            filter: `name~'${query}'&&bereich.name~'${selectedBereich}'${getSemesterParams(selectedSemester)}${getCategoryParams(selectedCategories)}`,
+            filter: `name~'${query}'&&bereich.name~'${selectedBereich}'${getSemesterParams(
+              selectedSemester
+            )}${getCategoryParams(selectedCategories)}`,
           })
       )
         .then((res) => res.json())
@@ -122,6 +127,13 @@ export default function taskList() {
   useEffect(() => {
     getSemesterParams(selectedSemester);
   }, [selectedSemester]);
+
+  function clearFilters() {
+    setSelectedCategories([]);
+    setSelectedBereich("");
+    setSelectedSemester([]);
+    console.log("Cleared Filters");
+  }
 
   if (isLoading) return <Loading />;
 
@@ -198,19 +210,13 @@ export default function taskList() {
             selectedList={selectedSemester}
           />
         </Box>
-        <Box>
-          <Typography variant="h6">Selected Filters</Typography>
-          {/* TODO: Add pills for selected filters for easy removal */}
-          {selectedCategories.map((item) => {
-            return <Chip key={item} label={item}/>
-          })}
-          {selectedSemester.map((item) => {
-            return <Chip key={item} label={item}/>
-          })}
-        </Box>
+        <FilterList
+          list={{ selectedCategories, selectedSemester }}
+          clearFilters={clearFilters}
+        />
       </Box>
       <Container className="tableContent">
-        <DBTable data={tasks} />
+        <DBTable data={tasks} existingFields={{categories, bereiche, semester}}/>
         {tasks.length < maxTasks ? showMoreButtonComponent() : null}
       </Container>
     </Box>
@@ -274,6 +280,7 @@ function SelectFilter({
         onChange={onChange}
         MenuProps={MenuProps}
       >
+        <MenuItem value="" selected>None</MenuItem>
         {list.map((item) => {
           if (!item.name) item.name = `${item.semester} ${item.jahr}`;
           return (
@@ -284,5 +291,38 @@ function SelectFilter({
         })}
       </Select>
     </FormControl>
+  );
+}
+
+function FilterList({ button = true, list, clearFilters }) {
+  if (list.selectedCategories.length + list.selectedSemester.length <= 0)
+    return;
+  return (
+    <Box
+      sx={{
+        display: "flex",
+        alignItems: "center",
+        flexDirection: "column",
+      }}
+    >
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          flexDirection: "column",
+        }}
+      >
+        <Typography variant="h6">Selected Filters</Typography>
+        {button ? <Button onClick={clearFilters}>Clear Filters</Button> : null}
+      </Box>
+      <Box sx={{ display: "flex", alignItems: "center", m: 1 }}>
+        {list.selectedCategories.map((item) => {
+          return <Chip key={item} label={item} />;
+        })}
+        {list.selectedSemester.map((item) => {
+          return <Chip key={item} label={item} />;
+        })}
+      </Box>
+    </Box>
   );
 }

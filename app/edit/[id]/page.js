@@ -5,14 +5,9 @@ import {
   CardActions,
   CardContent,
   CardHeader,
-  Checkbox,
   FormControl,
   Grid,
   IconButton,
-  InputLabel,
-  ListItemText,
-  MenuItem,
-  Select,
   TextField,
 } from "@mui/material";
 import ArrowBackIosNewIcon from "@mui/icons-material/ArrowBackIosNew";
@@ -21,12 +16,13 @@ import Loading from "./loading";
 import useSWR from "swr";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-
-const fetcher = (...args) => fetch(...args).then((res) => res.json());
+import MultiSelectField from "@/components/MultiSelectField";
+import SelectField from "@/components/SelectField";
 
 const fetchedData = fetch("http://localhost:3000/api/categories").then((res) =>
   res.json()
 );
+const fetcher = (...args) => fetch(...args).then((res) => res.json());
 
 export default function TaskPage({ params, props }) {
   const { data, error, isLoading } = useSWR(
@@ -150,71 +146,16 @@ export default function TaskPage({ params, props }) {
   );
 }
 
-const ITEM_HEIGHT = 48;
-const ITEM_PADDING_TOP = 8;
-const MenuProps = {
-  PaperProps: {
-    style: {
-      maxHeight: ITEM_HEIGHT * 4.5 + ITEM_PADDING_TOP,
-      width: 250,
-    },
-  },
-};
-
-function SelectField({ item, list, label = "Select", onChange }) {
-  return (
-    <FormControl sx={{ flex: 1 }}>
-      <InputLabel id={`${label}-Label`}>{label}</InputLabel>
-      <Select
-        labelId={`${label}-Label`}
-        label={label}
-        onChange={onChange}
-        value={item}
-        MenuProps={MenuProps}
-      >
-        {list.map((entry) => {
-          if (list[0].collectionName == "semester") {
-            entry.name = `${entry.semester} ${entry.jahr}`;
-          }
-          return (
-            <MenuItem key={entry.id} value={entry.name}>
-              {entry.name}
-            </MenuItem>
-          );
-        })}
-      </Select>
-    </FormControl>
-  );
-}
-
-function MultiSelectField({ item, list, label = "Select", onChange }) {
-  return (
-    <FormControl sx={{ flex: 1 }}>
-      <InputLabel id={`${label}-Label`}>{label}</InputLabel>
-      <Select
-        labelId={`${label}-Label`}
-        label={label}
-        multiple
-        value={item}
-        onChange={onChange}
-        renderValue={(selected) => selected.join(", ")}
-        MenuProps={MenuProps}
-      >
-        {list.map((entry) => {
-          if (!entry.name) entry.name = `${entry.semester} ${entry.jahr}`;
-          return (
-            <MenuItem key={entry.id} value={entry.name}>
-              <Checkbox checked={item.indexOf(entry.name) > -1} />
-              <ListItemText primary={entry.name} />
-            </MenuItem>
-          );
-        })}
-      </Select>
-    </FormControl>
-  );
-}
-
-function updateEntry(reference, id, name, bereich, semester, kategorien, setUpdate) {
+// Update the Database entry
+function updateEntry(
+  reference,
+  id,
+  name,
+  bereich,
+  semester,
+  kategorien,
+  setUpdate
+) {
   // Bereich ID finden
   bereich = reference.bereich.find((entry) => {
     if (entry.name == bereich) return entry;
@@ -246,5 +187,5 @@ function updateEntry(reference, id, name, bereich, semester, kategorien, setUpda
     },
   });
 
-  return setUpdate(true)
+  return setUpdate(true);
 }

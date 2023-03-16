@@ -1,21 +1,9 @@
 "use client";
-import {
-  Box,
-  Button,
-  Checkbox,
-  Chip,
-  FormControl,
-  InputBase,
-  InputLabel,
-  List,
-  ListItemText,
-  MenuItem,
-  Paper,
-  Select,
-  Typography,
-} from "@mui/material";
+import MultiSelectField from "@/components/MultiSelectField";
+import SelectField from "@/components/SelectField";
+import { Box, Button, Chip, InputBase, Paper, Typography } from "@mui/material";
 import { Container } from "@mui/system";
-import { useEffect, useState } from "react";
+import { use, useEffect, useState } from "react";
 import DBTable from "../components/DBTable";
 import Loading from "./loading";
 
@@ -26,31 +14,31 @@ function getCategoryParams(params) {
 }
 
 function getSemesterParams(params) {
-  // console.log(params);
   if (params.length <= 0) return "";
   const query = params
     .map((param) => {
-      // console.log(param);
       param = param.split(" ");
       return `(semester.semester='${param[0]}'&&semester.jahr=${param[1]})`;
     })
     .join("||");
-  // console.log(`&&(${query})`);
   return `&&(${query})`;
 }
 
+const fetchedData = fetch("http://localhost:3000/api/categories").then((res) =>
+  res.json()
+);
+
 export default function taskList() {
   const [query, setQuery] = useState("");
-  const [categories, setCategories] = useState([]);
   const [selectedCategories, setSelectedCategories] = useState([]);
-  const [bereiche, setBereiche] = useState([]);
   const [selectedBereich, setSelectedBereich] = useState("");
-  const [semester, setSemester] = useState([]);
   const [selectedSemester, setSelectedSemester] = useState([]);
   const [tasks, setTasks] = useState([]);
   const [taskAmount, setTaskAmount] = useState(30);
   const [maxTasks, setMaxTasks] = useState(-1);
   const [isLoading, setLoading] = useState(true);
+
+  const tableData = use(fetchedData);
 
   const showMoreButtonComponent = () => {
     return (
@@ -66,30 +54,6 @@ export default function taskList() {
       </Box>
     );
   };
-
-  useEffect(() => {
-    fetch(`http://127.0.0.1:8090/api/collections/kategorie/records`)
-      .then((res) => res.json())
-      .then((data) => {
-        setCategories(data?.items);
-      });
-  }, []);
-
-  useEffect(() => {
-    fetch(`http://127.0.0.1:8090/api/collections/bereich/records`)
-      .then((res) => res.json())
-      .then((data) => {
-        setBereiche(data?.items);
-      });
-  }, []);
-
-  useEffect(() => {
-    fetch(`http://127.0.0.1:8090/api/collections/semester/records`)
-      .then((res) => res.json())
-      .then((data) => {
-        setSemester(data?.items);
-      });
-  }, []);
 
   // Handles everything with the search query
   useEffect(() => {
@@ -132,7 +96,6 @@ export default function taskList() {
     setSelectedCategories([]);
     setSelectedBereich("");
     setSelectedSemester([]);
-    console.log("Cleared Filters");
   }
 
   if (isLoading) return <Loading />;
@@ -167,9 +130,11 @@ export default function taskList() {
             }}
           />
         </Paper>
-        <Box sx={{ display: "flex", gap: "1rem" }}>
-          <SelectFilter
-            multiSelect={true}
+        <Box sx={{ display: "flex", gap: "1rem", width: 800 }}>
+          <MultiSelectField
+            item={selectedCategories}
+            list={tableData.categories}
+            label="Kategorien"
             onChange={(event) => {
               const {
                 target: { value },
@@ -178,25 +143,20 @@ export default function taskList() {
                 typeof value === "string" ? value.split(",") : value
               );
             }}
-            label="Kategorie"
-            list={categories}
-            selectedList={selectedCategories}
           />
-
-          <SelectFilter
+          <SelectField
+            item={selectedBereich}
+            list={tableData.bereich}
+            label="Bereich"
             onChange={(e) => {
               setSelectedBereich(e.target.value);
             }}
-            label="Bereich"
-            list={bereiche}
-            selectedItem={selectedBereich}
+            nullOption={true}
           />
-
-          <SelectFilter
-            multiSelect={true}
-            // onChange={(e) => {
-            //   setSelectedSemester(e.target.value);
-            // }}
+          <MultiSelectField
+            item={selectedSemester}
+            list={tableData.semester}
+            label="Semester"
             onChange={(event) => {
               const {
                 target: { value },
@@ -205,9 +165,6 @@ export default function taskList() {
                 typeof value === "string" ? value.split(",") : value
               );
             }}
-            label="Semester"
-            list={semester}
-            selectedList={selectedSemester}
           />
         </Box>
         <FilterList
@@ -216,81 +173,10 @@ export default function taskList() {
         />
       </Box>
       <Container className="tableContent">
-        <DBTable data={tasks} existingFields={{categories, bereiche, semester}}/>
+        <DBTable data={tasks} existingFields={tableData} />
         {tasks.length < maxTasks ? showMoreButtonComponent() : null}
       </Container>
     </Box>
-  );
-}
-
-// Menu Props for the Select
-const ITEM_HEIGHT = 48;
-const ITEM_PADDING_TOP = 8;
-const MenuProps = {
-  PaperProps: {
-    style: {
-      maxHeight: ITEM_HEIGHT * 4.5 + ITEM_PADDING_TOP,
-      width: 250,
-    },
-  },
-};
-
-// Select Filter component
-function SelectFilter({
-  multiSelect = false,
-  onChange,
-  label = "Select",
-  list = [],
-  selectedList = [],
-  selectedItem = "",
-}) {
-  if (multiSelect)
-    return (
-      <FormControl sx={{ m: 1, width: 250 }}>
-        <InputLabel id={`${label}-Label`}>{label}</InputLabel>
-        <Select
-          labelId={`${label}-Label`}
-          label={label}
-          multiple
-          value={selectedList}
-          onChange={onChange}
-          renderValue={(selected) => selected.join(", ")}
-          MenuProps={MenuProps}
-        >
-          {list.map((item) => {
-            if (!item.name) item.name = `${item.semester} ${item.jahr}`;
-            return (
-              <MenuItem key={item.id} value={item.name}>
-                <Checkbox checked={selectedList.indexOf(item.name) > -1} />
-                <ListItemText primary={item.name} />
-              </MenuItem>
-            );
-          })}
-        </Select>
-      </FormControl>
-    );
-
-  return (
-    <FormControl sx={{ m: 1, width: 250 }}>
-      <InputLabel id={`${label}-Label`}>{label}</InputLabel>
-      <Select
-        labelId={`${label}-Label`}
-        label={label}
-        value={selectedItem}
-        onChange={onChange}
-        MenuProps={MenuProps}
-      >
-        <MenuItem value="" selected>None</MenuItem>
-        {list.map((item) => {
-          if (!item.name) item.name = `${item.semester} ${item.jahr}`;
-          return (
-            <MenuItem key={item.id} value={item.name}>
-              {item.name}
-            </MenuItem>
-          );
-        })}
-      </Select>
-    </FormControl>
   );
 }
 

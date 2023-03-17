@@ -53,7 +53,7 @@ function taskItem(task) {
       <TableCell>{task.expand.bereich.name}</TableCell>
       <TableCell>{`${task.expand.semester.semester} ${task.expand.semester.jahr}`}</TableCell>
       <TableCell>
-        <IconButton component={Link} href={`/edit/${task.id}`}>
+        <IconButton href={`/edit/${task.id}`}>
           <EditIcon />
         </IconButton>
       </TableCell>

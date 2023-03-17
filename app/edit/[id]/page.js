@@ -19,9 +19,6 @@ import { redirect } from "next/navigation";
 import MultiSelectField from "@/components/MultiSelectField";
 import SelectField from "@/components/SelectField";
 
-const fetchedData = fetch("http://localhost:3000/api/categories").then((res) =>
-  res.json()
-);
 const fetcher = (...args) => fetch(...args).then((res) => res.json());
 
 export default function TaskPage({ params, props }) {
@@ -29,6 +26,8 @@ export default function TaskPage({ params, props }) {
     `http://127.0.0.1:8090/api/collections/aufgaben/records/${params.id}?expand=semester,bereich`,
     fetcher
   );
+  const tableData = useSWR("/api/categories", fetcher);
+
   // Data Fields
   const [taskName, setTaskName] = useState("");
   const [bereich, setBereich] = useState("");
@@ -36,10 +35,8 @@ export default function TaskPage({ params, props }) {
   const [semester, setSemester] = useState("");
   const [updatedData, setUpdate] = useState(false);
 
-  const tableData = use(fetchedData);
-
   useEffect(() => {
-    if (!data) return;
+    if (!data || !tableData.data) return;
 
     setTaskName(data.name);
     setBereich(data.expand.bereich.name);
@@ -49,19 +46,20 @@ export default function TaskPage({ params, props }) {
     if (data.kategorien.length != 0) {
       setCategories(
         data.kategorien.map((entry) => {
-          return tableData.categories.find((category) => category.id === entry)
-            .name;
+          return tableData.data.categories.find(
+            (category) => category.id === entry
+          ).name;
         })
       );
     }
-  }, [data]);
+  }, [data, tableData.data]);
 
   useEffect(() => {
     if (updatedData) redirect("/");
   }, [updatedData]);
 
   // Load page if data is still being fetched
-  if (isLoading) return <Loading />;
+  if (isLoading || tableData.isLoading) return <Loading />;
 
   return (
     <Grid
@@ -76,7 +74,7 @@ export default function TaskPage({ params, props }) {
         <Card sx={{ marginTop: "2rem", width: "40rem" }}>
           <CardHeader
             avatar={
-              <IconButton component={Link} href="#">
+              <IconButton href="/">
                 <ArrowBackIosNewIcon />
               </IconButton>
             }
@@ -97,19 +95,19 @@ export default function TaskPage({ params, props }) {
             </FormControl>
             <SelectField
               item={bereich}
-              list={tableData.bereich}
+              list={tableData.data.bereich}
               label="Bereich"
               onChange={(e) => setBereich(e.target.value)}
             />
             <SelectField
               item={semester}
-              list={tableData.semester}
+              list={tableData.data.semester}
               label="Semester"
               onChange={(e) => setSemester(e.target.value)}
             />
             <MultiSelectField
               item={categories}
-              list={tableData.categories}
+              list={tableData.data.categories}
               label="Kategorien"
               onChange={(event) => {
                 const {
@@ -126,7 +124,7 @@ export default function TaskPage({ params, props }) {
               <Button
                 onClick={() => {
                   updateEntry(
-                    tableData,
+                    tableData.data,
                     params.id,
                     taskName,
                     bereich,

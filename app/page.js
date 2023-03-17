@@ -3,9 +3,10 @@ import MultiSelectField from "@/components/MultiSelectField";
 import SelectField from "@/components/SelectField";
 import { Box, Button, Chip, InputBase, Paper, Typography } from "@mui/material";
 import { Container } from "@mui/system";
-import { use, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import DBTable from "../components/DBTable";
 import Loading from "./loading";
+import useSWR from "swr";
 
 function getCategoryParams(params) {
   if (params.length <= 0) return "";
@@ -24,11 +25,11 @@ function getSemesterParams(params) {
   return `&&(${query})`;
 }
 
-const fetchedData = fetch("http://localhost:3000/api/categories").then((res) =>
-  res.json()
-);
+const fetcher = (...args) => fetch(...args).then((res) => res.json());
 
 export default function taskList() {
+  const tableData = useSWR('/api/categories', fetcher)
+
   const [query, setQuery] = useState("");
   const [selectedCategories, setSelectedCategories] = useState([]);
   const [selectedBereich, setSelectedBereich] = useState("");
@@ -37,8 +38,6 @@ export default function taskList() {
   const [taskAmount, setTaskAmount] = useState(30);
   const [maxTasks, setMaxTasks] = useState(-1);
   const [isLoading, setLoading] = useState(true);
-
-  const tableData = use(fetchedData);
 
   const showMoreButtonComponent = () => {
     return (
@@ -98,7 +97,7 @@ export default function taskList() {
     setSelectedSemester([]);
   }
 
-  if (isLoading) return <Loading />;
+  if (isLoading && tableData.isLoading) return <Loading />;
 
   return (
     <Box>
@@ -133,7 +132,7 @@ export default function taskList() {
         <Box sx={{ display: "flex", gap: "1rem", width: 800 }}>
           <MultiSelectField
             item={selectedCategories}
-            list={tableData.categories}
+            list={tableData.data.categories}
             label="Kategorien"
             onChange={(event) => {
               const {
@@ -146,7 +145,7 @@ export default function taskList() {
           />
           <SelectField
             item={selectedBereich}
-            list={tableData.bereich}
+            list={tableData.data.bereich}
             label="Bereich"
             onChange={(e) => {
               setSelectedBereich(e.target.value);
@@ -155,7 +154,7 @@ export default function taskList() {
           />
           <MultiSelectField
             item={selectedSemester}
-            list={tableData.semester}
+            list={tableData.data.semester}
             label="Semester"
             onChange={(event) => {
               const {
@@ -173,7 +172,7 @@ export default function taskList() {
         />
       </Box>
       <Container className="tableContent">
-        <DBTable data={tasks} existingFields={tableData} />
+        <DBTable data={tasks} existingFields={tableData.data} />
         {tasks.length < maxTasks ? showMoreButtonComponent() : null}
       </Container>
     </Box>

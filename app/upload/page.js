@@ -38,7 +38,7 @@ export default function UploadHub() {
 
   async function UploadToDB() {
     if(!files) return;
-    const pb = new PocketBase("http://127.0.0.1:8090");
+    const pb = new PocketBase(process.env.PocketbaseIP);
     setLoading(true)
 
     if (inputFileType == ".pdf") {
@@ -53,11 +53,11 @@ export default function UploadHub() {
     else if (inputFileType == ".csv") {
       let semester = await pb.collection("semester").getFullList(200);
       semester = createDataReference(semester);
-      console.log(semester);
+      // console.log(semester);
   
       let bereich = await pb.collection("bereich").getFullList(200);
       bereich = createDataReference(bereich);
-      console.log(bereich);
+      // console.log(bereich);
   
       await data.map(async (entry) => {
         // Filter schlechte einträge

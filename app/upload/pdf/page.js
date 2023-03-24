@@ -7,7 +7,7 @@ import Loading from "@/app/loading";
 
 // TODO upload zip and read content
 
-export default function createData() {
+export default function CreateData() {
   const [fileData, setFileData] = useState();
   const output = [];
 

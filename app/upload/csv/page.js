@@ -21,7 +21,7 @@ function createDataReference(data) {
   return referenceData;
 }
 
-export default function createData() {
+export default function CreateData() {
   const [csvData, setCsvData] = useState([]);
   const router = useRouter();
 

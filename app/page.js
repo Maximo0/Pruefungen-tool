@@ -37,7 +37,7 @@ function getSemesterParams(params) {
 
 const fetcher = (...args) => fetch(...args).then((res) => res.json());
 
-export default function taskList() {
+export default function TaskList() {
   const tableData = useSWR("/api/categories", fetcher);
 
   const [query, setQuery] = useState("");
@@ -237,8 +237,3 @@ function FilterList({ button = true, list, clearFilters }) {
     </Box>
   );
 }
-
-// Scheint noch nicht ganz zu funktionieren
-export const metadata = {
-  title: "Prüfungen",
-};

@@ -1,122 +1,192 @@
 "use client";
+
+import {
+  Box,
+  Button,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  List,
+  ListItem,
+  ListItemText,
+  Paper,
+  Typography,
+} from "@mui/material";
+import ArrowBackIosNewIcon from "@mui/icons-material/ArrowBackIosNew";
 import { useState } from "react";
 import PocketBase from "pocketbase";
-import Papa from "papaparse";
-import { useRouter } from "next/navigation";
+import Loading from "./loading";
 
-function createDataReference(data) {
-  let referenceData = [];
-  if (data[0].collectionName == "semester") {
-    data.map((entry) => {
-      referenceData.push({
-        id: entry.id,
-        name: `${entry.jahr} ${entry.semester}`,
-      });
-    });
-  } else {
-    data.map((entry) => {
-      referenceData.push({ id: entry.id, name: entry.name });
-    });
-  }
-  return referenceData;
-}
+export default function UploadHub() {
+  const [loading, setLoading] = useState(false);
+  const [files, setFiles] = useState(null);
+  const [openDialog, setOpenDialog] = useState(false);
+  const [inputFileType, setInputFileType] = useState("");
+  const [selectFolder, setSelectFolder] = useState(null);
 
-export default function createData() {
-  const [csvData, setCsvData] = useState([]);
-  const router = useRouter();
+  const handleDialogOpen = () => {
+    setOpenDialog(true);
+  };
+  const handleDialogClose = () => {
+    setOpenDialog(false);
+    setTimeout(() => {
+      if (files != null) setFiles(null);
+      if (selectFolder != null) setSelectFolder(null);
+    }, 100);
+  };
 
-  // let uploadButton = (
-  //   <button onClick={() => uploadToDB(csvData)}>Upload to DB</button>
-  // );
-  let uploadButton
-  if (csvData.length == 0) {
-    uploadButton = null;
-  } else {
-    uploadButton = (
-      <button onClick={() => uploadToDB(csvData)}>Upload to DB</button>
-    );
-  }
-
-  async function uploadToDB(data) {
+  async function UploadToDB() {
+    if(!files) return;
     const pb = new PocketBase("http://127.0.0.1:8090");
+    setLoading(true)
 
-    let semester = await pb.collection("semester").getFullList(200);
-    semester = createDataReference(semester);
-    console.log(semester);
+    if (inputFileType == ".pdf") {
+      for (const file of files) {
+        const formData = new FormData();
+        formData.append("file", file);
+        const upload = await pb.collection("pruefungen").create(formData);
+        // console.log(upload.file);
+      }
+      console.log("Uploaded PDFs!");
+    }
+    else if (inputFileType == ".csv") {
+      let semester = await pb.collection("semester").getFullList(200);
+      semester = createDataReference(semester);
+      console.log(semester);
+  
+      let bereich = await pb.collection("bereich").getFullList(200);
+      bereich = createDataReference(bereich);
+      console.log(bereich);
+  
+      await data.map(async (entry) => {
+        // Filter schlechte einträge
+        if (entry.length <= 2) return;
+        if (entry[0] == null || entry[1] == null || entry[2] == null) return;
+  
+        // Sucht nach den richtigen eintrags IDs
+        const semester_id = semester.find((o) => o.name == entry[1]).id;
+        const bereich_id = bereich.find((o) => o.name == entry[2]).id;
+  
+        const record = {
+          name: entry[0],
+          bereich: bereich_id,
+          semester: semester_id,
+          kategorien: [],
+        };
+  
+        // Trägt diese in der Datenbank ein
+        const upload = await pb.collection("aufgaben").create(record, { $autoCancel: false });
+      });
+    }
 
-    let bereich = await pb.collection("bereich").getFullList(200);
-    bereich = createDataReference(bereich);
-    console.log(bereich);
-
-    await data.map(async (entry) => {
-      // Filter schlechte einträge
-      if (entry.length <= 2) return;
-      if (entry[0] == null || entry[1] == null || entry[2] == null) return;
-
-      // Sucht nach den richtigen eintrags IDs
-      const semester_id = semester.find((o) => o.name == entry[1]).id;
-      const bereich_id = bereich.find((o) => o.name == entry[2]).id;
-
-      const record = {
-        name: entry[0],
-        bereich: bereich_id,
-        semester: semester_id,
-        kategorien: [],
-      };
-
-      // Trägt diese in der Datenbank ein
-      await pb.collection("aufgaben").create(record, { $autoCancel: false });
-    });
-    // redirect user
-    router.push("/");
+    setLoading(false)
+    handleDialogClose();
   }
+
+  if (loading) return <Loading />
 
   return (
-    <div>
-      <input
-        type="file"
-        accept=".csv"
-        onChange={(e) => {
-          const files = e.target.files;
-          console.log(files);
-          if (files) {
-            console.log(files[0]);
-            Papa.parse(files[0], {
-              complete: (results) => {
-                setCsvData(
-                  results.data.sort((a, b) => {
-                    if (a[1] > b[1]) {
-                      return -1;
-                    }
-                    if (b[1] > a[1]) {
-                      return 1;
-                    }
-                    return 0;
-                  })
-                );
-                console.log(results.data);
-              },
-            });
-          }
+    <Box
+      sx={{
+        height: "100vh",
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+      }}
+    >
+      <Box sx={{ position: "absolute", top: "5vh", left: "5vw" }}>
+        <Button size="large" startIcon={<ArrowBackIosNewIcon />} href="/">
+          Go back
+        </Button>
+      </Box>
+      <Paper
+        color="secondary"
+        elevation={2}
+        sx={{
+          display: "flex",
+          flexDirection: "column",
+          gap: "1rem",
+          position: "absolute",
+          padding: "2rem",
         }}
-      />
+      >
+        <Typography variant="h4" align="center">
+          Upload files
+        </Typography>
+        <Button
+          variant="outlined"
+          onClick={() => {
+            handleDialogOpen();
+            setInputFileType(".csv");
+          }}
+        >
+          Upload .csv file
+        </Button>
+        <Button
+          variant="outlined"
+          onClick={() => {
+            handleDialogOpen();
+            setInputFileType(".pdf");
+          }}
+        >
+          Upload .pdf file
+        </Button>
+        <Button
+          variant="outlined"
+          onClick={() => {
+            handleDialogOpen();
+            setSelectFolder(".pdf")
+            setSelectFolder("");
+          }}
+        >
+          Upload folder with files
+        </Button>
+      </Paper>
 
-      {uploadButton}
-      <hr />
-      <table>
-        <tbody>
-          {csvData.map((entry, index) => {
-            if (entry[0] == null) return;
-            return (
-              <tr key={index}>
-                <td>{entry[0]}</td>
-                <td>{entry[1]}</td>
-                <td>{entry[2]}</td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
-    </div>
+      <Dialog open={openDialog} onClose={handleDialogClose}>
+        <DialogTitle sx={{ textAlign: "center" }}>
+          {selectFolder == null ? "Select files" : "Select folder with files"}
+        </DialogTitle>
+        <DialogTitle>
+          <input
+            type="file"
+            onChange={(e) => {
+              const inputFiles = e.target.files;
+              setFiles(inputFiles);
+            }}
+            accept={inputFileType}
+            multiple
+            webkitdirectory={selectFolder}
+          />
+        </DialogTitle>
+        {files ? (
+          <DialogContent dividers={true}>
+            <List>
+              {files
+                ? Object.values(files).map((file) => {
+                    return (
+                      <ListItem key={file.name}>
+                        <ListItemText primary={file.name} />
+                      </ListItem>
+                    );
+                  })
+                : null}
+            </List>
+          </DialogContent>
+        ) : null}
+
+        <DialogActions>
+          <Button
+            onClick={() => {
+              handleDialogClose();
+            }}
+          >
+            Cancel
+          </Button>
+          <Button onClick={UploadToDB}>Upload</Button>
+        </DialogActions>
+      </Dialog>
+    </Box>
   );
 }

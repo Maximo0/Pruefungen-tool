@@ -1,7 +1,7 @@
 const apiLinks = [
-  "http://127.0.0.1:8090/api/collections/kategorie/records",
-  "http://127.0.0.1:8090/api/collections/bereich/records",
-  "http://127.0.0.1:8090/api/collections/semester/records",
+  `${process.env.PocketbaseIP}/api/collections/kategorie/records`,
+  `${process.env.PocketbaseIP}/api/collections/bereich/records`,
+  `${process.env.PocketbaseIP}/api/collections/semester/records`,
 ];
 
 async function getData(link) {

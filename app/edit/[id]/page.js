@@ -23,7 +23,7 @@ const fetcher = (...args) => fetch(...args).then((res) => res.json());
 
 export default function TaskPage({ params, props }) {
   const { data, error, isLoading } = useSWR(
-    `http://127.0.0.1:8090/api/collections/aufgaben/records/${params.id}?expand=semester,bereich`,
+    `${process.env.PocketbaseIP}/api/collections/aufgaben/records/${params.id}?expand=semester,bereich`,
     fetcher
   );
   const tableData = useSWR("/api/categories", fetcher);
@@ -172,7 +172,7 @@ function updateEntry(
     }).id;
   });
 
-  fetch(`http://127.0.0.1:8090/api/collections/aufgaben/records/${id}`, {
+  fetch(`${process.env.PocketbaseIP}/api/collections/aufgaben/records/${id}`, {
     method: "PATCH",
     body: JSON.stringify({
       name: name,
@@ -186,4 +186,9 @@ function updateEntry(
   });
 
   return setUpdate(true);
+}
+
+// Scheint noch nicht ganz zu funktionieren
+export const metadata = {
+  title: "Edit"
 }

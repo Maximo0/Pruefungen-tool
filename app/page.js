@@ -1,7 +1,17 @@
 "use client";
 import MultiSelectField from "@/components/MultiSelectField";
 import SelectField from "@/components/SelectField";
-import { Box, Button, Chip, InputBase, Paper, Typography } from "@mui/material";
+import { useTheme, alpha } from "@mui/material/styles";
+import {
+  AppBar,
+  Box,
+  Button,
+  Chip,
+  InputBase,
+  Paper,
+  Toolbar,
+  Typography,
+} from "@mui/material";
 import { Container } from "@mui/system";
 import { useEffect, useState } from "react";
 import DBTable from "../components/DBTable";
@@ -28,7 +38,7 @@ function getSemesterParams(params) {
 const fetcher = (...args) => fetch(...args).then((res) => res.json());
 
 export default function taskList() {
-  const tableData = useSWR('/api/categories', fetcher)
+  const tableData = useSWR("/api/categories", fetcher);
 
   const [query, setQuery] = useState("");
   const [selectedCategories, setSelectedCategories] = useState([]);
@@ -38,6 +48,7 @@ export default function taskList() {
   const [taskAmount, setTaskAmount] = useState(30);
   const [maxTasks, setMaxTasks] = useState(-1);
   const [isLoading, setLoading] = useState(true);
+  const theme = useTheme();
 
   const showMoreButtonComponent = () => {
     return (
@@ -58,23 +69,25 @@ export default function taskList() {
   useEffect(() => {
     // Timer to stop repeated api calls on key press
     const timer = setTimeout(() => {
+      const params = new URLSearchParams({
+        page: 1,
+        perPage: taskAmount,
+        expand: "semester,bereich,kategorien,pruefung",
+        filter: `name~'${query}'&&bereich.name~'${selectedBereich}'${getSemesterParams(
+          selectedSemester
+        )}${getCategoryParams(selectedCategories)}`,
+      });
       fetch(
-        "http://127.0.0.1:8090/api/collections/aufgaben/records?" +
-          new URLSearchParams({
-            page: 1,
-            perPage: taskAmount,
-            expand: "semester,bereich,kategorien",
-            filter: `name~'${query}'&&bereich.name~'${selectedBereich}'${getSemesterParams(
-              selectedSemester
-            )}${getCategoryParams(selectedCategories)}`,
-          })
+        `${process.env.PocketbaseIP}/api/collections/aufgaben/records?${params}`
       )
         .then((res) => res.json())
         .then((data) => {
+          // console.log(data);
           setTasks(data?.items);
           setMaxTasks(data.totalItems);
           if (data?.items.length < 30) setTaskAmount(30);
           setLoading(false);
+          // console.log(data.items);
         });
     }, 250);
 
@@ -101,6 +114,34 @@ export default function taskList() {
 
   return (
     <Box>
+      <AppBar position="sticky">
+        <Toolbar sx={{gap: "1rem"}}>
+          <Box sx={{ flexGrow: 1 }}>
+            <Button href="/upload" color="secondary">
+              Upload
+            </Button>
+          </Box>
+          <Paper sx={{ flexGrow: 2 }}>
+            <InputBase
+              placeholder="Aufgaben suchen"
+              sx={{
+                padding: "0.3rem",
+                width: "100%",
+                backgroundColor: alpha(theme.palette.primary.main, 0.25),
+              }}
+              value={query}
+              onChange={(e) => {
+                setQuery(e.target.value);
+              }}
+            />
+          </Paper>
+          <Box sx={{ flexGrow: 1, display: "flex", flexDirection: "row-reverse" }}>
+            <Button href="#" color="secondary">
+              Login
+            </Button>
+          </Box>
+        </Toolbar>
+      </AppBar>
       <Box
         sx={{
           display: "flex",
@@ -109,63 +150,48 @@ export default function taskList() {
           gap: "2rem",
         }}
       >
-        <Typography variant="h4" component="h1" sx={{ textAlign: "center" }}>
-          Aufgaben Liste
+        <Typography variant="h4" component="h1" sx={{ textAlign: "center", marginTop: "1rem"}}>
+          Prüfungen
         </Typography>
-        <Paper
-          sx={{
-            p: "2px 4px",
-            display: "flex",
-            alignItems: "center",
-            width: 600,
-          }}
-        >
-          <InputBase
-            placeholder="Aufgaben suchen"
-            sx={{ flex: 1 }}
-            value={query}
-            onChange={(e) => {
-              setQuery(e.target.value);
-            }}
-          />
-        </Paper>
-        <Box sx={{ display: "flex", gap: "1rem", width: 800 }}>
-          <MultiSelectField
-            item={selectedCategories}
-            list={tableData.data.categories}
-            label="Kategorien"
-            onChange={(event) => {
-              const {
-                target: { value },
-              } = event;
-              setSelectedCategories(
-                typeof value === "string" ? value.split(",") : value
-              );
-            }}
-          />
-          <SelectField
-            item={selectedBereich}
-            list={tableData.data.bereich}
-            label="Bereich"
-            onChange={(e) => {
-              setSelectedBereich(e.target.value);
-            }}
-            nullOption={true}
-          />
-          <MultiSelectField
-            item={selectedSemester}
-            list={tableData.data.semester}
-            label="Semester"
-            onChange={(event) => {
-              const {
-                target: { value },
-              } = event;
-              setSelectedSemester(
-                typeof value === "string" ? value.split(",") : value
-              );
-            }}
-          />
-        </Box>
+        {tableData.data != undefined ? (
+          <Box sx={{ display: "flex", gap: "1rem", width: 800 }}>
+            <MultiSelectField
+              item={selectedCategories}
+              list={tableData.data.categories}
+              label="Kategorien"
+              onChange={(event) => {
+                const {
+                  target: { value },
+                } = event;
+                setSelectedCategories(
+                  typeof value === "string" ? value.split(",") : value
+                );
+              }}
+            />
+            <SelectField
+              item={selectedBereich}
+              list={tableData.data.bereich}
+              label="Bereich"
+              onChange={(e) => {
+                setSelectedBereich(e.target.value);
+              }}
+              nullOption={true}
+            />
+            <MultiSelectField
+              item={selectedSemester}
+              list={tableData.data.semester}
+              label="Semester"
+              onChange={(event) => {
+                const {
+                  target: { value },
+                } = event;
+                setSelectedSemester(
+                  typeof value === "string" ? value.split(",") : value
+                );
+              }}
+            />
+          </Box>
+        ) : null}
         <FilterList
           list={{ selectedCategories, selectedSemester }}
           clearFilters={clearFilters}
@@ -211,3 +237,8 @@ function FilterList({ button = true, list, clearFilters }) {
     </Box>
   );
 }
+
+// Scheint noch nicht ganz zu funktionieren
+export const metadata = {
+  title: "Prüfungen",
+};

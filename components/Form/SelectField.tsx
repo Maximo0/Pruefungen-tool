@@ -1,12 +1,20 @@
 import { FormControl, InputLabel, MenuItem, Select } from "@mui/material";
 
+interface SelectFieldProps {
+  item: string;
+  list: Array<any>;
+  label: string;
+  onChange: (event: any) => void;
+  nullOption?: boolean;
+}
+
 export default function SelectField({
   item,
   list,
   label = "Select",
   onChange,
   nullOption = false,
-}) {
+}: SelectFieldProps) {
   const ITEM_HEIGHT = 48;
   const ITEM_PADDING_TOP = 8;
   const MenuProps = {

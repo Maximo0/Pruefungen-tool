@@ -7,12 +7,19 @@ import {
   Select,
 } from "@mui/material";
 
+interface MultiSelectFieldProps {
+  item: string[];
+  list: Array<any>;
+  label: string;
+  onChange: (event: any) => void;
+}
+
 export default function MultiSelectField({
   item,
   list,
   label = "Select",
   onChange,
-}) {
+}: MultiSelectFieldProps) {
   const ITEM_HEIGHT = 48;
   const ITEM_PADDING_TOP = 8;
   const MenuProps = {

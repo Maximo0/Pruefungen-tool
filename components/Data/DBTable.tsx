@@ -1,8 +1,8 @@
-"use client";
+// Mui Components
 import {
+  Box,
   IconButton,
   Modal,
-  Paper,
   Table,
   TableBody,
   TableCell,
@@ -11,23 +11,35 @@ import {
   TableRow,
 } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
-import { Box } from "@mui/system";
+// Next Components
 import { useState } from "react";
+import { GetServerSidePropsContext } from "next";
+import initPocketbase from "@/helpers/initPocketbase";
+import { authData } from "@/types/user";
 
-export default function DBTable(props) {
+export default function DBTable({
+  data,
+  authData,
+}: {
+  data: any;
+  authData: authData;
+}) {
   const [open, setOpen] = useState(false);
-  const [linkParams, setLinkParams] = useState(["",""])
+  const [linkParams, setLinkParams] = useState(["", ""]);
+
   const handleOpen = () => {
     setOpen(true);
   };
-  const handleClose = () => setOpen(false);
+  const handleClose = () => {
+    setOpen(false);
+  };
 
-  function taskItem(task) {
+  function taskItem(task: any) {
     let categoryField;
     if (!task.expand.kategorien) {
       categoryField = <TableCell>None</TableCell>;
     } else {
-      const kategorien = task.expand.kategorien.map((kategorie) => {
+      const kategorien = task.expand.kategorien.map((kategorie: any) => {
         return kategorie.name;
       });
       categoryField = <TableCell>{kategorien.join(", ")}</TableCell>;
@@ -46,8 +58,7 @@ export default function DBTable(props) {
         <TableCell
           sx={styles}
           onClick={() => {
-            console.log(task.expand.pruefung);
-            setLinkParams([task.expand.pruefung.id, task.expand.pruefung.file])
+            setLinkParams([task.expand.pruefung.id, task.expand.pruefung.file]);
             handleOpen();
           }}
         >
@@ -56,11 +67,13 @@ export default function DBTable(props) {
         {categoryField}
         <TableCell>{task.expand.bereich.name}</TableCell>
         <TableCell>{`${task.expand.semester.semester} ${task.expand.semester.jahr}`}</TableCell>
-        <TableCell>
-          <IconButton href={`/edit/${task.id}`}>
-            <EditIcon />
-          </IconButton>
-        </TableCell>
+        {authData.role != "gast" && (
+          <TableCell>
+            <IconButton href={`/edit/${task.id}`}>
+              <EditIcon />
+            </IconButton>
+          </TableCell>
+        )}
       </TableRow>
     );
   }
@@ -78,16 +91,15 @@ export default function DBTable(props) {
             height: "90vh",
           }}
         >
-          <iframe
+          <embed
             height="100%"
             width="100%"
-            src={`http://217.160.69.95:8090/api/files/x8v82l4vw28fda0/${linkParams[0]}/${linkParams[1]}#view=fit`}
-            frameborder="0"
+            src={`${process.env.PocketbaseIP}/api/files/x8v82l4vw28fda0/${linkParams[0]}/${linkParams[1]}#view=fit`}
             style={{ userSelect: "none" }}
-          ></iframe>
+          />
         </Box>
       </Modal>
-      <TableContainer components={Paper}>
+      <TableContainer>
         <Table>
           <TableHead>
             <TableRow>
@@ -95,11 +107,11 @@ export default function DBTable(props) {
               <TableCell>Kategorie</TableCell>
               <TableCell>Bereich</TableCell>
               <TableCell>Semester</TableCell>
-              <TableCell></TableCell>
+              {authData.role != "gast" && <TableCell></TableCell>}
             </TableRow>
           </TableHead>
           <TableBody>
-            {props.data.map((task) => {
+            {data.map((task: object) => {
               return taskItem(task);
             })}
           </TableBody>

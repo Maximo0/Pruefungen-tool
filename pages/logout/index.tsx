@@ -17,7 +17,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
 
   pb.authStore.clear();
 
-  context.res?.setHeader("set-cookie", pb.authStore.exportToCookie());
+  // context.res?.setHeader("set-cookie", pb.authStore.exportToCookie());
 
   return {
     redirect: {

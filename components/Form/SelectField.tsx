@@ -26,7 +26,7 @@ export default function SelectField({
     },
   };
   return (
-    <FormControl sx={{ flex: 1 }}>
+    <FormControl sx={{ flex: 1, width: "100%"}}>
       <InputLabel id={`${label}-Label`}>{label}</InputLabel>
       <Select
         labelId={`${label}-Label`}

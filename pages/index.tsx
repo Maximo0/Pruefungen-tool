@@ -20,6 +20,8 @@ import {
   MenuItem,
   Divider,
   ListItemIcon,
+  Grid,
+  useMediaQuery,
 } from "@mui/material";
 import { Logout, Upload, Password } from "@mui/icons-material";
 import { useTheme, alpha } from "@mui/material/styles";
@@ -86,6 +88,8 @@ export default function Home({
   const handleClose = () => {
     setAnchorEl(null);
   };
+
+  const matches = useMediaQuery((theme: any) => theme.breakpoints.down("sm"))
 
   // Show more Button component
   const ShowMoreButton = () => {
@@ -157,133 +161,129 @@ export default function Home({
   }
 
   return (
-    <>
-      <Head>
-        <title>Prüfungen</title>
-      </Head>
-      <Box>
-        <AppBar position="sticky">
-          <Toolbar sx={{ gap: "1rem" }}>
-            <Box sx={{ flexGrow: 1 }} />
-            <Paper sx={{ flexGrow: 2 }}>
-              <InputBase
-                placeholder="Aufgaben suchen"
-                sx={{
-                  padding: "0.3rem",
-                  width: "100%",
-                  backgroundColor: alpha(theme.palette.primary.main, 0.25),
-                }}
-                value={query}
-                onChange={(e) => {
-                  setQuery(e.target.value);
-                }}
-              />
-            </Paper>
-            <Box
+    <Box>
+      <AppBar position="sticky">
+        <Toolbar sx={{ gap: "1rem" }}>
+          <Box sx={{ flexGrow: 1 }} />
+          <Paper sx={{ flexGrow: 2 }}>
+            <InputBase
+              placeholder="Aufgaben suchen"
               sx={{
-                flexGrow: 1,
-                display: "flex",
-                flexDirection: "row-reverse",
+                padding: "0.3rem",
+                width: "100%",
+                backgroundColor: alpha(theme.palette.primary.main, 0.25),
               }}
+              value={query}
+              onChange={(e) => {
+                setQuery(e.target.value);
+              }}
+            />
+          </Paper>
+          <Box
+            sx={{
+              flexGrow: 1,
+              display: "flex",
+              flexDirection: "row-reverse",
+            }}
+          >
+            <IconButton
+              onClick={handleClick}
+              size="small"
+              sx={{ ml: 2 }}
+              aria-controls={open ? "account-menu" : undefined}
+              aria-haspopup="true"
+              aria-expanded={open ? "true" : undefined}
             >
-              <IconButton
-                onClick={handleClick}
-                size="small"
-                sx={{ ml: 2 }}
-                aria-controls={open ? "account-menu" : undefined}
-                aria-haspopup="true"
-                aria-expanded={open ? "true" : undefined}
-              >
-                <Avatar sx={{ width: 32, height: 32 }}></Avatar>
-              </IconButton>
-            </Box>
-          </Toolbar>
-        </AppBar>
+              <Avatar sx={{ width: 32, height: 32 }}></Avatar>
+            </IconButton>
+          </Box>
+        </Toolbar>
+      </AppBar>
 
-        <Menu
-          anchorEl={anchorEl}
-          id="account-menu"
-          open={open}
-          onClose={handleClose}
-          // onClick={handleClose}
-          PaperProps={{
-            elevation: 0,
-            sx: {
-              overflow: "visible",
-              filter: "drop-shadow(0px 2px 8px rgba(0,0,0,0.32))",
-              mt: 1.5,
-              "& .MuiAvatar-root": {
-                width: 32,
-                height: 32,
-                ml: -0.5,
-                mr: 1,
-              },
-              "&:before": {
-                content: '""',
-                display: "block",
-                position: "absolute",
-                top: 0,
-                right: 14,
-                width: 10,
-                height: 10,
-                bgcolor: "background.paper",
-                transform: "translateY(-50%) rotate(45deg)",
-                zIndex: 0,
-              },
+      <Menu
+        anchorEl={anchorEl}
+        id="account-menu"
+        open={open}
+        onClose={handleClose}
+        // onClick={handleClose}
+        PaperProps={{
+          elevation: 0,
+          sx: {
+            overflow: "visible",
+            filter: "drop-shadow(0px 2px 8px rgba(0,0,0,0.32))",
+            mt: 1.5,
+            "& .MuiAvatar-root": {
+              width: 32,
+              height: 32,
+              ml: -0.5,
+              mr: 1,
             },
-          }}
-          transformOrigin={{ horizontal: "right", vertical: "top" }}
-          anchorOrigin={{ horizontal: "right", vertical: "bottom" }}
+            "&:before": {
+              content: '""',
+              display: "block",
+              position: "absolute",
+              top: 0,
+              right: 14,
+              width: 10,
+              height: 10,
+              bgcolor: "background.paper",
+              transform: "translateY(-50%) rotate(45deg)",
+              zIndex: 0,
+            },
+          },
+        }}
+        transformOrigin={{ horizontal: "right", vertical: "top" }}
+        anchorOrigin={{ horizontal: "right", vertical: "bottom" }}
+      >
+        <MenuItem>
+          <Avatar /> {authData.username}
+        </MenuItem>
+        <Divider />
+        <MenuItem
+          component={Link}
+          href="/upload"
+          disabled={authData.role == "gast" || true}
         >
-          <MenuItem>
-            <Avatar /> {authData.username}
-          </MenuItem>
-          <Divider />
-          <MenuItem
-            component={Link}
-            href="/upload"
-            disabled={authData.role == "gast" || true}
-          >
-            <ListItemIcon>
-              <Upload fontSize="small" />
-            </ListItemIcon>
-            Upload (WIP)
-          </MenuItem>
-          <MenuItem
-            component={Link}
-            href="/change-password"
-            disabled={authData.id == "e1mpp76y4mloqp0"}
-          >
-            <ListItemIcon>
-              <Password fontSize="small" />
-            </ListItemIcon>
-            Passwort ändern
-          </MenuItem>
-          <MenuItem component={Link} href="/logout">
-            <ListItemIcon>
-              <Logout fontSize="small" />
-            </ListItemIcon>
-            Logout
-          </MenuItem>
-        </Menu>
+          <ListItemIcon>
+            <Upload fontSize="small" />
+          </ListItemIcon>
+          Upload (WIP)
+        </MenuItem>
+        <MenuItem
+          component={Link}
+          href="/change-password"
+          disabled={authData.id == "e1mpp76y4mloqp0"}
+        >
+          <ListItemIcon>
+            <Password fontSize="small" />
+          </ListItemIcon>
+          Passwort ändern
+        </MenuItem>
+        <MenuItem component={Link} href="/logout">
+          <ListItemIcon>
+            <Logout fontSize="small" />
+          </ListItemIcon>
+          Logout
+        </MenuItem>
+      </Menu>
 
-        <Box
-          sx={{
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            gap: "2rem",
-          }}
-        >
-          <Typography
-            variant="h4"
-            component="h1"
-            sx={{ textAlign: "center", marginTop: "1rem" }}
-          >
+      <Grid container spacing={0} direction="column" alignItems="center" justifyContent="center">
+        <Grid item xs={12} md={8}>
+          <Typography variant="h4" component="h1" sx={{margin: "1rem 0"}}>
             Prüfungen
           </Typography>
-          {tableData.data != undefined ? (
-            <Box sx={{ display: "flex", gap: "1rem", width: 800 }}>
+        </Grid>
+        {tableData.data != undefined ? (
+          <Grid
+            item
+            container
+            spacing={2}
+            sx={{
+              padding: "1rem 3rem",
+            }}
+            direction={matches ? "column" : "row"}
+          >
+            <Grid item xs={4}>
               <MultiSelectField
                 item={selectedCategories}
                 list={tableData.data.categories}
@@ -297,6 +297,8 @@ export default function Home({
                   );
                 }}
               />
+            </Grid>
+            <Grid item xs={4}>
               <SelectField
                 item={selectedBereich}
                 list={tableData.data.bereich}
@@ -306,6 +308,8 @@ export default function Home({
                 }}
                 nullOption={true}
               />
+            </Grid>
+            <Grid item xs={4}>
               <MultiSelectField
                 item={selectedSemester}
                 list={tableData.data.semester}
@@ -319,13 +323,13 @@ export default function Home({
                   );
                 }}
               />
-            </Box>
-          ) : null}
-          <FilterList
-            list={{ selectedCategories, selectedSemester }}
-            clearFilters={clearFilters}
-          />
-        </Box>
+            </Grid>
+          </Grid>
+        ) : null}
+        <FilterList
+          list={{ selectedCategories, selectedSemester }}
+          clearFilters={clearFilters}
+        />
 
         {isLoading || tableData.isLoading ? (
           <Loading />
@@ -335,8 +339,8 @@ export default function Home({
             {tasks.length < maxTasks && ShowMoreButton()}
           </Container>
         )}
-      </Box>
-    </>
+      </Grid>
+    </Box>
   );
 }
 
@@ -384,7 +388,7 @@ function FilterList({
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   const pb = await initPocketbase(context);
 
-  const authData = JSON.parse(JSON.stringify(pb.authStore));  
+  const authData = JSON.parse(JSON.stringify(pb.authStore));
 
   if (!pb.authStore.isValid) {
     return {

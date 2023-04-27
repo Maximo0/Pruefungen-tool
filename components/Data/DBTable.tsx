@@ -13,8 +13,6 @@ import {
 import EditIcon from "@mui/icons-material/Edit";
 // Next Components
 import { useState } from "react";
-import { GetServerSidePropsContext } from "next";
-import initPocketbase from "@/helpers/initPocketbase";
 import { authData } from "@/types/user";
 
 export default function DBTable({
@@ -68,7 +66,7 @@ export default function DBTable({
         <TableCell>{task.expand.bereich.name}</TableCell>
         <TableCell>{`${task.expand.semester.semester} ${task.expand.semester.jahr}`}</TableCell>
         {authData.role != "gast" && (
-          <TableCell>
+          <TableCell sx={{padding: ".5rem"}}>
             <IconButton href={`/edit/${task.id}`}>
               <EditIcon />
             </IconButton>

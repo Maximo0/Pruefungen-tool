@@ -24,8 +24,7 @@ export default function Upload({
         justifyContent="center"
         style={{ minHeight: "100vh" }}
       >
-        <Typography variant="h2">Upload</Typography>
-        <Typography variant="h3">WIP</Typography>
+        
       </Grid>
     </>
   );
@@ -34,7 +33,7 @@ export default function Upload({
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   const pb = await initPocketbase(context);
 
-  const authData = JSON.parse(JSON.stringify(pb.authStore));
+  const authData = JSON.parse(JSON.stringify(pb.authStore)); 
 
   if (!pb.authStore.isValid) {
     return {
@@ -43,6 +42,15 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
         permanent: false,
       },
     };
+  }
+
+  if(authData.baseModel.role == "gast") {
+    return {
+      redirect: {
+        destination: "/",
+        permanent: false,
+      },
+    }
   }
 
   return {

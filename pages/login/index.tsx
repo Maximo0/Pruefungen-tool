@@ -75,7 +75,9 @@ export default function LoginPage({
         <Paper sx={{ padding: "2rem" }}>
           <form onSubmit={handleForm}>
             <FormControl error={error}>
-              <Typography variant="h4" textAlign="center">Login</Typography>
+              <Typography variant="h4" textAlign="center">
+                Login
+              </Typography>
               {error && (
                 <FormHelperText>Wrong username or password</FormHelperText>
               )}

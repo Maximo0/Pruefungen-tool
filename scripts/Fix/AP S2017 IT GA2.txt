@@ -1,0 +1,26 @@
+Extracted Pages:
+
+Page 0: ['5. Handlungs:']
+Page 1: ['1. Handlungsschritt (25 Punkte)']
+Page 2: []
+Page 3: ['2. Handlungsschritt (25 Punkte)']
+Page 4: []
+Page 5: []
+Page 6: ['3. Handlungsschritt (25 Punkte)']
+Page 7: []
+Page 8: ['4. Handlungsschritt (25 Punkte)']
+Page 9: []
+Page 10: ['5. Handlungsschritt (25 Punkte)']
+Page 11: []
+
+Bereich: 
+
+[('Ganzheitliche Aufgabe Il', '', '', ''), ('', '', '', 'IT-System-')]
+
+Tasks:
+
+{'semester': 'Sommer 2017', 'test_type': 'GA2', 'tasks': 'Ein Teilprojekt planen und ein Team leiten', 'page': 0}
+{'semester': 'Sommer 2017', 'test_type': 'GA2', 'tasks': 'Für einen Auftrag eine Nachkalkulation durchführen und Maßnahmen zur Gewinnsteigerung planen', 'page': 1}
+{'semester': 'Sommer 2017', 'test_type': 'GA2', 'tasks': 'Ein System zur Datenübertragung planen', 'page': 3}
+{'semester': 'Sommer 2017', 'test_type': 'GA2', 'tasks': 'Ein ER-Modell entwickeln', 'page': 6}
+{'semester': 'Sommer 2017', 'test_type': 'GA2', 'tasks': 'Die Anbindung von Messstationen an die Zentrale und ein LAN mit Subnetzen planen', 'page': 8}

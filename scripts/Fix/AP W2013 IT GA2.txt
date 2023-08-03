@@ -1,0 +1,30 @@
+Extracted Pages:
+
+Page 0: ['2. Handlungs:']
+Page 1: ['1. Handlungsschritt (25 Punkte)']
+Page 2: []
+Page 3: ['2. Handlungsschritt (25 Punkte)']
+Page 4: []
+Page 5: ['3. Handlungsschritt (25 Punkte)']
+Page 6: []
+Page 7: []
+Page 8: ['4. Handlungsschritt (25 Punkte)']
+Page 9: []
+Page 10: []
+Page 11: []
+Page 12: []
+Page 13: ['5. Handlungsschritt (25 Punkte)']
+Page 14: []
+Page 15: []
+
+Bereich: 
+
+[('', '', '', 'IT-System-'), ('', '', '', 'IT-System-'), ('Ganzheitliche Aufgabe II', '', '', '')]
+
+Tasks:
+
+{'semester': 'Winter 2013', 'test_type': 'GA2', 'tasks': 'Probleme der Datensicherheit und Datensicherung klären (Einsatz von USV- und RAID-Systemen; Backup-Verfahren und', 'page': 0}
+{'semester': 'Winter 2013', 'test_type': 'GA2', 'tasks': 'Einsatz von Netzwerkkomponenten klären (WLAN-Komponenten und Englischtext zur Nutzung des WLAN-Hotspot-Systems)', 'page': 1}
+{'semester': 'Winter 2013', 'test_type': 'GA2', 'tasks': 'Beschaffung der Technik durchführen (Angebotsvergleich; Beschaffung mit optimaler Bestellmenge)', 'page': 3}
+{'semester': 'Winter 2013', 'test_type': 'GA2', 'tasks': 'Datenbank zur Inventarverwaltung entwickeln und EPK erstellen', 'page': 5}
+{'semester': 'Winter 2013', 'test_type': 'GA2', 'tasks': 'Planungen für eine Hotel-App durchführen', 'page': 8}

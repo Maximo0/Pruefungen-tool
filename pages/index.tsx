@@ -242,12 +242,12 @@ export default function Home({
         <MenuItem
           component={Link}
           href="/upload"
-          disabled={authData.role == "gast" || true}
+          disabled={authData.role == "gast"}
         >
           <ListItemIcon>
             <Upload fontSize="small" />
           </ListItemIcon>
-          Upload (WIP)
+          Upload
         </MenuItem>
         <MenuItem
           component={Link}
@@ -267,7 +267,8 @@ export default function Home({
         </MenuItem>
       </Menu>
 
-      <Grid container spacing={0} direction="column" alignItems="center" justifyContent="center">
+
+      <Grid container spacing={0} direction="column" alignItems="center" justifyContent="center" maxWidth={1200} margin="auto">
         <Grid item xs={12} md={8}>
           <Typography variant="h4" component="h1" sx={{margin: "1rem 0"}}>
             Prüfungen
@@ -280,7 +281,7 @@ export default function Home({
             spacing={2}
             sx={{
               padding: "1rem 3rem",
-            }}
+            }} 
             direction={matches ? "column" : "row"}
           >
             <Grid item xs={4}>
@@ -326,10 +327,13 @@ export default function Home({
             </Grid>
           </Grid>
         ) : null}
+
+
         <FilterList
           list={{ selectedCategories, selectedSemester }}
           clearFilters={clearFilters}
         />
+
 
         {isLoading || tableData.isLoading ? (
           <Loading />
@@ -373,7 +377,7 @@ function FilterList({
         <Typography variant="h6">Selected Filters</Typography>
         {button && <Button onClick={clearFilters}>Clear Filters</Button>}
       </Box>
-      <Box sx={{ display: "flex", alignItems: "center", m: 1 }}>
+      <Box sx={{ display: "flex", alignItems: "center", m: 1, gap: ".5rem", flexWrap: "wrap" }}>
         {list.selectedCategories.map((item: string) => {
           return <Chip key={item} label={item} />;
         })}

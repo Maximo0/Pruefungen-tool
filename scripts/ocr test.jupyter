@@ -1,0 +1,11 @@
+from doctr.io import DocumentFile
+from doctr.models import kie_predictor
+
+# Model
+model = kie_predictor(det_arch='db_resnet50', reco_arch='crnn_vgg16_bn', pretrained=True)
+# PDF
+doc = DocumentFile.from_pdf("Prüfungen/AP S2012 IT GA2.pdf")
+# Analyze
+result = model(doc)
+
+print(result)

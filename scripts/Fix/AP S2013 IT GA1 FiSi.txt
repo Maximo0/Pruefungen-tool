@@ -1,0 +1,21 @@
+Extracted Pages:
+
+Page 0: []
+Page 1: ['1. Handlungsschritt (25 Punkte)']
+Page 2: []
+Page 3: []
+Page 4: ['2. Handlungsschritt (25 Punkte)']
+Page 5: ['3. Handlungsschritt (25 Punkte)']
+Page 6: []
+Page 7: ['4. Handlungsschritt (25 Punkte)']
+Page 8: []
+Page 9: ['5. Handlungsschritt (25 Punkte)']
+Page 10: []
+Page 11: []
+
+Bereich: 
+
+[('', '', 'Systemintegration', '')]
+
+Tasks:
+

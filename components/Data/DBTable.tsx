@@ -14,6 +14,7 @@ import EditIcon from "@mui/icons-material/Edit";
 // Next Components
 import { useState } from "react";
 import { authData } from "@/types/user";
+import { link } from "fs";
 
 export default function DBTable({
   data,
@@ -23,7 +24,7 @@ export default function DBTable({
   authData: authData;
 }) {
   const [open, setOpen] = useState(false);
-  const [linkParams, setLinkParams] = useState(["", ""]);
+  const [linkParams, setLinkParams] = useState(["", "", ""]);
 
   const handleOpen = () => {
     setOpen(true);
@@ -56,7 +57,7 @@ export default function DBTable({
         <TableCell
           sx={styles}
           onClick={() => {
-            setLinkParams([task.expand.pruefung.id, task.expand.pruefung.file]);
+            setLinkParams([task.expand.pruefung.id, task.expand.pruefung.file, task.page]);
             handleOpen();
           }}
         >
@@ -92,7 +93,7 @@ export default function DBTable({
           <embed
             height="100%"
             width="100%"
-            src={`${process.env.PocketbaseIP}/api/files/x8v82l4vw28fda0/${linkParams[0]}/${linkParams[1]}#view=fit`}
+            src={`${process.env.PocketbaseIP}/api/files/pruefungen/${linkParams[0]}/${linkParams[1]}#view=fit&page=${linkParams[2]+1}`}
             style={{ userSelect: "none" }}
           />
         </Box>

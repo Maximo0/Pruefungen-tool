@@ -1,0 +1,28 @@
+Extracted Pages:
+
+Page 0: []
+Page 1: ['1. Handlungsschritt (25 Punkte)']
+Page 2: []
+Page 3: []
+Page 4: ['2. Handlungsschritt (25 Punkte)']
+Page 5: []
+Page 6: ['3. Handlungsschritt (25 Punkte)']
+Page 7: []
+Page 8: ['4. Handlungsschritt (25 Punkte)']
+Page 9: []
+Page 10: []
+Page 11: []
+Page 12: ['3. Handlungsschritt (25 Punkte)']
+Page 13: []
+
+Bereich: 
+
+[('', '', 'Systemintegration', '')]
+
+Tasks:
+
+{'semester': 'Sommer 2014', 'test_type': 'GA1 FISI', 'tasks': 'Das Netzwerk auf Fehler analysieren und Fehler beseitigen, IPv6 einführen', 'page': 1}
+{'semester': 'Sommer 2014', 'test_type': 'GA1 FISI', 'tasks': 'WLAN-Komponenten beschaffen', 'page': 4}
+{'semester': 'Sommer 2014', 'test_type': 'GA1 FISI', 'tasks': 'VLANs einrichten, Firewallregeln erklären und ergänzen', 'page': 6}
+{'semester': 'Sommer 2014', 'test_type': 'GA1 FISI', 'tasks': 'Einen RADIUS-Server bereitstellen', 'page': 8}
+{'semester': 'Sommer 2014', 'test_type': 'GA1 FISI', 'tasks': 'Einen Passwortgenerator entwickeln', 'page': 12}

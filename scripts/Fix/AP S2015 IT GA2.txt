@@ -1,0 +1,27 @@
+Extracted Pages:
+
+Page 0: ['4.Handhings:']
+Page 1: ['1. Handlungsschritt (25 Punkte)']
+Page 2: []
+Page 3: ['2. Handlungsschritt (25 Punkte)']
+Page 4: []
+Page 5: []
+Page 6: []
+Page 7: ['3. Handlungsschritt (25 Punkte)']
+Page 8: []
+Page 9: ['4. Handlungsschritt (25 Punkte)']
+Page 10: []
+Page 11: ['5. Handlungsschritt (25 Punkte)']
+Page 12: []
+
+Bereich: 
+
+[('', '', '', 'IT-System-')]
+
+Tasks:
+
+{'semester': 'Sommer 2015', 'test_type': 'GA2', 'tasks': 'Wirtschaftlichkeitsprüfung eines Projektes', 'page': 0}
+{'semester': 'Sommer 2015', 'test_type': 'GA2', 'tasks': 'Prozessbeschreibung des Wareneingangs und Entwurf einer Erfassungsmaske', 'page': 1}
+{'semester': 'Sommer 2015', 'test_type': 'GA2', 'tasks': 'Netzwerkkomponenten und Protokolle beurteilen, IP-Adressberechnung, Englischtext, Videoüberwachungssystem auswählen', 'page': 3}
+{'semester': 'Sommer 2015', 'test_type': 'GA2', 'tasks': 'Warenerkennung, Codierung und Identifikation von Artikeln mit Barcode und RFID', 'page': 7}
+{'semester': 'Sommer 2015', 'test_type': 'GA2', 'tasks': 'Datensicherungskonzept erstellen, NAS/RAID-System einrichten', 'page': 9}

@@ -1,0 +1,29 @@
+Extracted Pages:
+
+Page 0: []
+Page 1: ['1. Handlungsschritt (25 Punkte)']
+Page 2: []
+Page 3: []
+Page 4: []
+Page 5: []
+Page 6: ['2. Handlungsschritt (25 Punkte)']
+Page 7: []
+Page 8: ['3. Handlungsschritt (25 Punkte)']
+Page 9: []
+Page 10: ['4. Handlungsschritt (25 Punkte)']
+Page 11: []
+Page 12: ['5. Handlungsschritt (25 Punkte)']
+Page 13: ['2. :']
+Page 14: []
+
+Bereich: 
+
+[('', '', 'Systemintegration', '')]
+
+Tasks:
+
+{'semester': 'Winter 2013', 'test_type': 'GA1 FISI', 'tasks': 'IP-Konfiguration prüfen, Routing einrichten', 'page': 1}
+{'semester': 'Winter 2013', 'test_type': 'GA1 FISI', 'tasks': 'Ein Datenbankmodell erweitern und IT-Sicherheit beurteilen', 'page': 6}
+{'semester': 'Winter 2013', 'test_type': 'GA1 FISI', 'tasks': 'Einen Serverausfall beheben', 'page': 8}
+{'semester': 'Winter 2013', 'test_type': 'GA1 FISI', 'tasks': 'Verschiedene Serverdienste einrichten', 'page': 10}
+{'semester': 'Winter 2013', 'test_type': 'GA1 FISI', 'tasks': 'IPv6-Einführung beurteilen', 'page': 12}

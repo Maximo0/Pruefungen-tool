@@ -21,3 +21,14 @@ password: demo00/.
 
 ## Extra note
 When using this project later, change the users credentials and or create new ones.
+
+
+# Instalation
+
+
+## Docker
+create a docker image using the Dockerfile.\
+```docker build -t pocketbase .```
+
+Run the docker Image on the specified port.\
+```docker run --name Pocketbase -p 8080:8080 pocketbase```

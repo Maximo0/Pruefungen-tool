@@ -93,7 +93,7 @@ export default function DBTable({
           <embed
             height="100%"
             width="100%"
-            src={`${process.env.PocketbaseIP}/api/files/pruefungen/${linkParams[0]}/${linkParams[1]}#view=fit&page=${linkParams[2]+1}`}
+            src={`${process.env.PocketbaseIP}/api/files/pruefungen/${linkParams[0]}/${linkParams[1]}#view=fit&page=${parseInt(linkParams[2]) + 1}`}
             style={{ userSelect: "none" }}
           />
         </Box>

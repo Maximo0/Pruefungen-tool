@@ -31,6 +31,11 @@ import { useState, useEffect } from "react";
 import useSWR from "swr";
 import Link from "next/link";
 
+/**
+ * Gibt eine Abfragezeichenfolge zurück, um Kategorien basierend auf den angegebenen Parametern zu filtern.
+ * @param params - Ein Array von Kategorienamen, nach denen gefiltert werden soll.
+ * @returns Eine Abfragezeichenfolge im Format "&&({kategorien.name?='${param1}'||kategorien.name?='${param2}'||...})".
+ */
 function getCategoryParams(params: any[]) {
   if (params.length <= 0) return "";
   const query = params
@@ -39,6 +44,11 @@ function getCategoryParams(params: any[]) {
   return `&&(${query})`;
 }
 
+/**
+ * Gibt eine Abfragezeichenfolge zurück, um Semester basierend auf den angegebenen Parametern zu filtern.
+ * @param params - Ein Array von Semester-Strings, nach denen gefiltert werden soll. Jeder String sollte das Format "Semester Jahr" haben, z.B. "Winter 2020".
+ * @returns Eine Abfragezeichenfolge im Format "&&((semester.semester='${semester}'&&semester.jahr=${jahr})||(semester.semester='${semester}'&&semester.jahr=${jahr})||...)".
+ */
 function getSemesterParams(params: any[]) {
   if (params.length <= 0) return "";
   const query = params
@@ -82,16 +92,29 @@ export default function Home({
   // Profile Icon functions
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const open = Boolean(anchorEl);
+
+  /**
+   * Behandelt das Klicken auf ein Element und setzt das Anchor-Element entsprechend.
+   *
+   * @param event - Das Klick-Ereignis.
+   */
   const handleClick = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
   };
+
+  /**
+   * Schließt das Anchor-Element.
+   */
   const handleClose = () => {
     setAnchorEl(null);
   };
 
-  const matches = useMediaQuery((theme: any) => theme.breakpoints.down("sm"))
+  const matches = useMediaQuery((theme: any) => theme.breakpoints.down("sm"));
 
-  // Show more Button component
+  /**
+   * Komponente für den "Mehr laden" Button.
+   * @returns Die JSX-Elemente für den Button.
+   */
   const ShowMoreButton = () => {
     return (
       <Box textAlign="center">
@@ -107,10 +130,15 @@ export default function Home({
     );
   };
 
-  // Search for tasks using the query param
+  /**
+   * Sucht nach Aufgaben unter Verwendung des Query-Parameters.
+   *
+   * @returns {void}
+   */
   useEffect(() => {
     const timer = setTimeout(() => {
-      // Build the URLSearchParams object
+      // Baut ein URLSearchParams-Objekt auf,
+      // das für die Filterung und Abfrage von Daten verwendet wird.
       const params = new URLSearchParams({
         page: "1",
         perPage: taskAmount.toString(),
@@ -120,7 +148,7 @@ export default function Home({
         )}${getCategoryParams(selectedCategories)}`,
       });
 
-      // Fetch the data
+      // Fetch Daten von der API Route
       fetch(
         `${process.env.PocketbaseIP}/api/collections/aufgaben/records?${params}`
       )
@@ -128,7 +156,7 @@ export default function Home({
           return res.json();
         })
         .then((data) => {
-          // Set the data
+          // Setzt die Aufgaben und die maximale Anzahl von Aufgaben
           setTasks(data?.items);
           setMaxTasks(data?.totalItems);
           if (data?.items.length < 30) setTaskAmount(30);
@@ -153,7 +181,7 @@ export default function Home({
     getSemesterParams(selectedSemester);
   }, [selectedSemester]);
 
-  // Clear all filters
+  // Setzt alle useState Filter zurück
   function clearFilters() {
     setSelectedCategories([]);
     setSelectedBereich("");
@@ -162,6 +190,9 @@ export default function Home({
 
   return (
     <Box>
+      {/**
+       * Head-Element für die Seite.
+       */}
       <AppBar position="sticky">
         <Toolbar sx={{ gap: "1rem" }}>
           <Box sx={{ flexGrow: 1 }} />
@@ -200,6 +231,9 @@ export default function Home({
         </Toolbar>
       </AppBar>
 
+      {/**
+       * Menü-Element für das Profil Icon im Head-Element.
+       */}
       <Menu
         anchorEl={anchorEl}
         id="account-menu"
@@ -267,10 +301,20 @@ export default function Home({
         </MenuItem>
       </Menu>
 
-
-      <Grid container spacing={0} direction="column" alignItems="center" justifyContent="center" maxWidth={1200} margin="auto">
+      {/**
+       * Body-Element für die Seite.
+       */}
+      <Grid
+        container
+        spacing={0}
+        direction="column"
+        alignItems="center"
+        justifyContent="center"
+        maxWidth={1200}
+        margin="auto"
+      >
         <Grid item xs={12} md={8}>
-          <Typography variant="h4" component="h1" sx={{margin: "1rem 0"}}>
+          <Typography variant="h4" component="h1" sx={{ margin: "1rem 0" }}>
             Prüfungen
           </Typography>
         </Grid>
@@ -281,7 +325,7 @@ export default function Home({
             spacing={2}
             sx={{
               padding: "1rem 3rem",
-            }} 
+            }}
             direction={matches ? "column" : "row"}
           >
             <Grid item xs={4}>
@@ -328,12 +372,10 @@ export default function Home({
           </Grid>
         ) : null}
 
-
         <FilterList
           list={{ selectedCategories, selectedSemester }}
           clearFilters={clearFilters}
         />
-
 
         {isLoading || tableData.isLoading ? (
           <Loading />
@@ -348,6 +390,14 @@ export default function Home({
   );
 }
 
+/**
+ * Komponente für die Filterliste.
+ *
+ * @param button - Ob der "Clear Filters" Button angezeigt werden soll.
+ * @param list - Die Liste der ausgewählten Filter.
+ * @param clearFilters - Die Funktion zum Zurücksetzen der Filter.
+ * @returns Die JSX-Elemente für die Filterliste.
+ */
 function FilterList({
   button = true,
   list,
@@ -377,7 +427,15 @@ function FilterList({
         <Typography variant="h6">Selected Filters</Typography>
         {button && <Button onClick={clearFilters}>Clear Filters</Button>}
       </Box>
-      <Box sx={{ display: "flex", alignItems: "center", m: 1, gap: ".5rem", flexWrap: "wrap" }}>
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          m: 1,
+          gap: ".5rem",
+          flexWrap: "wrap",
+        }}
+      >
         {list.selectedCategories.map((item: string) => {
           return <Chip key={item} label={item} />;
         })}
@@ -389,6 +447,12 @@ function FilterList({
   );
 }
 
+/**
+ * Überprüft, ob der Benutzer angemeldet ist und leitet ihn gegebenenfalls zu /login um.
+ *
+ * @param context - Der Kontext der Seite.
+ * @returns Die Props für die Seite.
+ */
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   const pb = await initPocketbase(context);
 

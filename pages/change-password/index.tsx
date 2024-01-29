@@ -25,6 +25,11 @@ export default function ChangePassword({
   const [errorMessage, setErrorMessage] = useState("");
   const router = useRouter();
 
+  /**
+   * Ändert das Passwort
+   * @param event FormEvent
+   * @returns
+   */
   async function handleForm(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
@@ -141,6 +146,11 @@ export default function ChangePassword({
   );
 }
 
+/**
+ * Kümmert sich um die Authentifizierung
+ * @param context
+ * @returns
+ */	
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   const pb = await initPocketbase(context);
 

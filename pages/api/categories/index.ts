@@ -6,6 +6,11 @@ const apiLinks = [
   `${process.env.PocketbaseIP}/api/collections/semester/records`,
 ];
 
+/**
+ * Besorgt sich die Daten von der Pocketbase API
+ * @param link Link zur Pocketbase API
+ * @returns Daten von der Pocketbase API
+*/
 async function getData(link: string) {
   const res = await fetch(link);
   const data = await res.json();

@@ -27,6 +27,9 @@ import { GetServerSidePropsContext } from "next";
 import Head from "next/head";
 import { useState, forwardRef } from "react";
 
+/**
+ * Übergang für das Dialogfenster
+ */
 const Transition = forwardRef(function Transition(
   props: TransitionProps & {
     children: React.ReactElement<any, any>;
@@ -49,6 +52,10 @@ export default function Upload({
   const [files, setFiles] = useState<FileList | []>([]);
   const [tasks, setTasks] = useState([]);
 
+  /**
+   * Kümmert sich um die Dateiauswahl und speichert die Dateien in den State
+   * @param event
+   */
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files[0]) {
       setFiles(event.target.files);
@@ -64,6 +71,9 @@ export default function Upload({
     setConfirmOpen(false);
   };
 
+  /**
+   * Kümmert sich um das Ausführen des Python Scripts
+   */
   function runPython() {
     try {
       console.log("Extracting Tasks from PDFs");
@@ -108,6 +118,9 @@ export default function Upload({
     }
   }
 
+  /**
+   * Kümmert sich um das Hochladen der Daten in die Datenbank
+   */
   async function uploadToDB() {
     // Close Dialog windows and set working to true
     setConfirmOpen(false);
@@ -266,6 +279,10 @@ export default function Upload({
     }
   }
 
+  /**
+   * Kümmert sich um das Anzeigen der Daten aus der PDF Datei
+   * @returns JSX.Element mit den Daten
+   */
   const DisplayData = () => {
     let rows = tasks.map((task: any) => {
       return (
@@ -296,6 +313,9 @@ export default function Upload({
     );
   };
 
+  /**
+   * Render Funktion des Uploads mit allen Elementen
+   */
   return (
     <>
       <Head>
@@ -309,7 +329,7 @@ export default function Upload({
         style={{ minHeight: "100vh" }}
       >
         <Box sx={{ marginTop: "1rem", display: "flex", gap: "1rem" }}>
-          <Button href="/" sx={{marginRight: "1rem"}}>
+          <Button href="/" sx={{ marginRight: "1rem" }}>
             <ArrowBackIosNew />
             <Typography variant="h5">Zurück</Typography>
           </Button>
@@ -339,6 +359,9 @@ export default function Upload({
         {tasks.length == 0 ? null : <DisplayData />}
       </Grid>
 
+      {/**
+       * Dialog Fenster zum Bestätigen des Uploads
+      */}
       <Dialog
         open={confirmOpen}
         TransitionComponent={Transition}
@@ -353,6 +376,9 @@ export default function Upload({
         </DialogActions>
       </Dialog>
 
+      {/**
+       * Modal Fenster zum Anzeigen des Upload Fortschritts
+       */}
       <Modal open={working}>
         <Box
           sx={{
@@ -388,7 +414,11 @@ export default function Upload({
   );
 }
 
-// Extra support functions
+/**
+ * Kümmert sich um das Finden der Semester ID
+ * @param name Name des Semesters
+ * @returns ID des Semesters
+*/
 async function getSemesterID(name: string) {
   // split the semester string into year and season
   const splitString = name.split(" ");
@@ -405,6 +435,11 @@ async function getSemesterID(name: string) {
   return result.data.items[0].id;
 }
 
+/**
+ * Kümmert sich um das Finden der Bereich ID
+ * @param name Name des Bereichs
+ * @returns ID des Bereichs
+*/
 async function getBereichID(name: string) {
   // Set Searchparams
   const searchParams = new URLSearchParams({
@@ -418,6 +453,11 @@ async function getBereichID(name: string) {
   return result.data.items[0].id;
 }
 
+/**
+ * Schaut ob die Aufgaben bereits in der Datenbank sind.
+ * @param task Handlungsschritte
+ * @returns Aufgaben die bereits in der Datenbank sind
+*/
 async function checkExistingTask(task: any) {
   const searchParams = new URLSearchParams({
     filter: `name~'${task.tasks}'&&bereich~'${await getBereichID(
@@ -432,6 +472,11 @@ async function checkExistingTask(task: any) {
   return result;
 }
 
+/**
+ * Kümmert sich um die Authentifizierung
+ * @param context
+ * @returns
+ */	
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   const pb = await initPocketbase(context);
 

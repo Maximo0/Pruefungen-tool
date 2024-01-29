@@ -8,6 +8,9 @@ export const config = {
   },
 };
 
+/**
+ * Sammelt alle PDFs und führt das Python Script aus um die Daten zu extrahieren
+*/
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
@@ -32,7 +35,6 @@ export default async function handler(
 
     PythonShell.run("pdf_extractor.py", options)
       .then((result: any) => {
-        // console.log("tasks: ", result);
         res.status(200).json({ tasks: result, files: paths });
       })
       .catch((err) => {

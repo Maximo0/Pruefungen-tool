@@ -139,9 +139,6 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
 
   const authData = JSON.parse(JSON.stringify(pb.authStore));
 
-  // console.log(context.req.headers.host);
-
-  // Redirect if not logged in
   if (!pb.authStore.isValid) {
     return {
       redirect: {
@@ -151,13 +148,17 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
     };
   }
 
-  // Get all data from the Data Table
-  // NOTE: This is probably not the best way to do this
+  /**
+   * Holt die Daten der Kategorien für die Tabelle.
+   */
   const tableData = await fetch(
     `http://${context.req.headers.host}/api/categories`
   ).then((res) => res.json());
 
-  // Redirect if id is not found in Data Table
+  /**
+   * Holt die Daten der Aufgabe.
+   * Wenn es die Aufgabe nicht gibt wieder zurück auf die Startseite leiten.
+  */
   try {
     if (context.query.id) {
       const data = await pb
@@ -175,7 +176,6 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
       };
     }
   } catch (error) {
-    // Redirect to home page
     return {
       redirect: {
         destination: "/",
@@ -193,6 +193,17 @@ interface UpdateEntryProps {
   bereich: string;
   semester: string;
 }
+
+/**
+ * Eintrag aktualisieren
+ * @param reference Referenzdaten
+ * @param id ID des Eintrags
+ * @param name Name des Eintrags
+ * @param kategorien Kategorien des Eintrags
+ * @param bereich Bereich des Eintrags
+ * @param semester Semester des Eintrags
+ * @returns redirect zur Startseite
+*/
 async function updateEntry({
   reference,
   id,

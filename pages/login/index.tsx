@@ -26,6 +26,11 @@ export default function LoginPage({
   const [error, setError] = useState(false);
   const router = useRouter();
 
+  /**
+   * Login mit PocketBase
+   * @param event FormEvent
+   * @returns 
+  */
   async function handleForm(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const pb = new PocketBase(process.env.PocketbaseIP);
@@ -103,6 +108,11 @@ export default function LoginPage({
   );
 }
 
+/**
+ * Prüfen, ob der Nutzer bereits eingeloggt ist
+ * @param context GetServerSidePropsContext
+ * @returns 
+*/
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   const pb = await initPocketbase(context);
 

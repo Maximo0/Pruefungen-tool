@@ -1,165 +1,95 @@
-# -*- coding: utf-8 -*-
+import fast_deskew
 import os
 import sys
-import numpy as np
+import tempfile
 import fitz
-import cv2
-import pytesseract
-from unidecode import unidecode
 import re
+import cv2
+from pytesseract import image_to_string
+import concurrent.futures
+from unidecode import unidecode
+import json
 
-# Testing Modules
+from pprint import pprint
 import time
-import multiprocessing
 
 # Global Parameters
-sys.stdout.reconfigure(encoding='utf-8')
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
+TEMP_DIR = f"{tempfile.gettempdir()}\pruefungs-app"
+all_times = []
+
+# Main function
+
 
 def main():
-        # clear the temp folder
-        clear()
-
-        # Run the scheduler
-        scheduler()
-
-
-def scheduler():
     all_tasks = []
+    total_files = len(sys.argv[1:])
+    current_file = 1
+
+    # clear the temp folder before starting
+    clear_temp()
 
     # Loop through all the argument paths
     for arg in sys.argv[1:]:
+        # Opens PDF and splits it into images
+        start_time_split = time.time()
+        split_pdf(arg)
+        all_times.append([time.time() - start_time_split, "+ Split"])
 
-        # Open the PDF
-        doc = fitz.open(arg)
-        processes = []
+        # Do OCR on the images in parallel
+        start_time_ocr = time.time()
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            for page in range(len(os.listdir(TEMP_DIR))):
+                executor.submit(do_ocr, page, 1)
 
-        # Loop through all the pages of the PDF
-        for page in range(doc.page_count):
-            pixmap = doc[page].get_pixmap(dpi=300)
-            pixmap.save(f"{ROOT_DIR}/temp/file-{page}.png")
-            p = multiprocessing.Process(target=get_content, args=[page])
-            p.start()
-            processes.append(p)
+        # Wait for all tasks to complete
+        executor.shutdown()
+        all_times.append([time.time() - start_time_ocr, "+ OCR"])
 
-        # Wait for all processes to finish
-        for process in processes:
-            process.join()
-
+        start_time_process = time.time()
         # Process the information
-        tasks = process_information(arg)
-        for task in tasks:  
-            all_tasks.append(task)
+        # 1. get all the tasks in order
+        tasks = get_tasks()
+        # 2. get pages to those tasks
+        pages = get_pages()
+        # 3. get Semester to those tasks
+        semester = get_semester()
+        # 4. get test type to those tasks (GA1 FISI, GA1 FIAE, GA2)
+        test_type = get_testtype()
+        # 5. Filepath to the PDF
+        filepath = arg
 
-        # Close the PDF
-        doc.close()
+        # Append task to the list
+        for i, task in enumerate(tasks):
+            all_tasks.append({
+                "task": task,
+                "page": pages[i][0],
+                "semester": semester,
+                "test_type": test_type,
+                "filepath": filepath
+            })
+
+        # Increment the current file counter for the progress update
+        current_file += 1
+
+        # Append the time taken to process the information
+        all_times.append([time.time() - start_time_process, "+ Process"])
 
         # Clear the temp folder for the next cycle
-        clear()
+        clear_temp()
 
     # Return tasks to the API for further processing
-    print(all_tasks)
-
-def do_ocr(image, psm):
-    # Run the OCR on the image
-    try:
-        ocr_result = pytesseract.image_to_string(
-            # PSM 1 for accurate results
-            # PSM 12 for most results in no order
-            image, config=f"--psm {psm} --oem 1", lang="deu+eng")
-        ocr_result = unidecode(ocr_result)
-        return ocr_result
-    except:
-        print("Failed OCR of image")
-        pass
-
-def get_content(page): 
-    image = cv2.imread(f"{ROOT_DIR}/temp/file-{page}.png")
-    # Return the OCR result
-    if page == 0 or page == 1:
-        psm = 1
-    else: 
-        psm = 12
-
-    result = do_ocr(image, psm)
-
-    with open(f"{ROOT_DIR}/temp/file-{page}.txt", "w") as f:
-        f.write(result) # type: ignore
-        f.close()
+    return all_tasks
 
 
-def process_information(file_path):
-    tasks = get_tasks()
-    pages = get_pages()
-    semester, test_type = get_main_information()
-
-    task_info_list = []
-
-    for i, task in enumerate(tasks):
-        task_info = {
-            "semester": semester,
-            "test_type": test_type,
-            "tasks": tasks[i],
-            "page": pages[i][0],
-            "file_path": file_path
-        }
-        task_info_list.append(task_info)
-
-
-    return task_info_list
-
-
-# Functions for getting information from the temp files
-def get_main_information():
-    # Extract the main from the first page of the PDF
-    with open(f"{ROOT_DIR}/temp/file-0.txt") as f:
-        text = f.read()
-
-        # Get Semester
-        semester = re.search(r"(Sommer \d{4})|(Winter \d{4})", text).group()
-
-        # Get Type of test
-        test_type = re.findall(r"(Ganzheitliche Aufgabe [I|l]{2})|(Anwendungsentwicklung)|(Systemintegration)", text)
-        
-
-        # Initialize an empty list to store the matched test types
-        matched_types = []
-
-        # print("before if: ", test_type)
-
-        # Loop through the matches and append the matched test types to the list
-        for t in test_type:
-            if t[0]:
-                matched_types.append("GA2")
-                break
-            elif t[1]:
-                matched_types.append("GA1 FIAE")
-            elif t[2]:
-                matched_types.append("GA1 FISI")
-
-        # print("Matched Types: ", matched_types)
-
-        # Check if any test types were matched and set the test_type variable accordingly
-        if "GA2" in matched_types:
-            test_type = "GA2"
-        elif matched_types:
-            test_type = ", ".join(matched_types)
-        else:
-            test_type = "Not Found"
-
-        # print("after if: ", test_type)
-
-        return semester, test_type
-
+# Gathers all tasks present in the PDF
 def get_tasks():
-    # Extract tasks from the text files
-    temp_folder = f"{ROOT_DIR}/temp"
-
-    # # Process the image
-    img = cv2.imread(f"{temp_folder}/file-1.png")
+    # Process the image
+    img = cv2.imread(f"{TEMP_DIR}/file-1.png")
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     blur = cv2.GaussianBlur(gray, (9, 9), 10)
-    thresh = cv2.threshold(blur, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)[1]
+    thresh = cv2.threshold(
+        blur, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)[1]
     kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (9, 3))
     dilate = cv2.dilate(thresh, kernel, iterations=1)
     cnts = cv2.findContours(dilate, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
@@ -170,53 +100,45 @@ def get_tasks():
         x, y, w, h = cv2.boundingRect(c)
         if h > 200 and w > 20:
             roi = img[y:y+h, x:x+w]
-    
+
     # Process the image with Pytesseract
     config = r"--psm 6 --oem 3"
-    ocr_result = pytesseract.image_to_string(roi, config=config, lang="deu+eng")
+    ocr_result = image_to_string(roi, config=config, lang="deu+eng")
 
     tasks = re.findall(r"(\d[.,]\s{1}.+)", ocr_result, re.MULTILINE)
     tasks = [task[3:].strip() for task in tasks]
-
     return tasks
 
-    # with open(f"{temp_folder}/file-1.txt", "r") as f:
-    #     text = f.read()
-    #     tasks = re.findall(r"(\d[.,]\s{1}.+)", text, re.MULTILINE)[:5]
-    #     tasks = [task[3:].strip() for task in tasks]
-    #     return tasks
 
+# Gathers all the page numbers for the tasks
 def get_pages():
-    # Extract page numbers from the text files and return a list
-    temp_folder = f"{ROOT_DIR}/temp"
-    counter = 0
     pages = []
+    counter = 0
 
     # Get a sorted list of filenames in the temp_folder directory
-    filenames = sorted(os.listdir(temp_folder), key = lambda x: x[-6:-4])
-
-    # Loop through the files and extract the page numbers
+    filenames = sorted(os.listdir(TEMP_DIR), key=lambda x: x[-6:-4])
     for filename in filenames:
         if filename.endswith(".txt"):
-            file_path = os.path.join(temp_folder, filename)
-            with open(file_path, "r") as f:
-                text = f.read()
+            with open(f"{TEMP_DIR}/{filename}", "r") as f:
+                content = f.read()
                 # matches = re.findall(r"(^\d[.,] Handlungsschritt)", text, re.MULTILINE)
-                matches = re.findall(r"\d+[.,]\s*(?:(?:Han\s+hritt|Handlungsschritt)[\s:]+)?(?:\(\d*\s+Punkte\))", text, re.MULTILINE)
+                matches = re.findall(
+                    r"\d+[.,]\s*(?:(?:Han\s+hritt|Handlungsschritt)[\s:]+)?(?:\(\d*\s+Punkte\))", content, re.MULTILINE)
 
                 # print(f"Page {counter}: ",matches)
 
                 if matches:
                     pages.append([counter, matches[0][0]])
-                f.close()           
+                f.close()
+                f.close()
             counter += 1
 
-    # Extra check to fill in pages that couldnt be found
+        # Extra check to fill in pages that couldnt be found
     final_pages = []
     for i in range(len(pages)):
         if i == 0:
             final_pages.append(pages[i])
-        else: 
+        else:
             prev_num = int(pages[i-1][1])
             curr_num = int(pages[i][1])
             if curr_num - prev_num == 1:
@@ -227,24 +149,107 @@ def get_pages():
                 final_pages.append(pages[i])
 
     return final_pages
-    
 
 
-def clear():
-    # Clear the temp folder
-    dir = f'{ROOT_DIR}/temp'
-    for f in os.listdir(dir):
-        os.remove(os.path.join(dir, f))
+# get the semester
+def get_semester():
+    with open(f"{TEMP_DIR}/file-0.txt", "r") as f:
+        content = f.read()
+        semester = re.search(r"(Sommer \d{4})|(Winter \d{4})", content).group()
+        f.close()
+    return semester
 
 
-if len(sys.argv) < 1:
-    print("Please provide a path to the PDF file")
-    exit()
+def get_testtype():
+    with open(f"{TEMP_DIR}/file-0.txt", "r") as f:
+        content = f.read()
+        test_type = re.findall(
+            r"(Ganzheitliche Aufgabe [I|l]{2})|(Anwendungsentwicklung)|(Systemintegration)", content)
+        f.close()
 
-# Make temp folder if it doesn't exist
-if os.path.isdir(f"{ROOT_DIR}/temp") == False:
-    os.mkdir(f"{ROOT_DIR}/temp")
+    for t in test_type:
+        if t[0]:
+            return "GA2"
+        elif t[1]:
+            return "GA1 FIAE"
+        elif t[2]:
+            return "GA1 FISI"
+        else:
+            return "Unknown"
+
+
+def split_pdf(arg):
+    doc = fitz.open(arg)
+
+    # Create a thread pool
+    with concurrent.futures.ThreadPoolExecutor() as executor:
+        # Loop through all the pages of the PDF
+        for page in range(doc.page_count):
+            pixmap = doc[page].get_pixmap(dpi=300)
+            # Save the pixmap as JPEG
+            executor.submit(save_pixmap, pixmap, page)
+
+    # Wait for all tasks to complete
+    executor.shutdown()
+    doc.close()
+
+
+def save_pixmap(pixmap, page):
+    # Save the pixmap as JPEG
+    pixmap.save(f"{TEMP_DIR}/file-{page}.png")
+
+    # Deskew image
+    deskew_image(page)
+
+
+# Runs the OCR on the image
+def do_ocr(page, psm):
+    try:
+        ocr_result = image_to_string(
+            f"{TEMP_DIR}/file-{page}.png",
+            config=f'--psm {psm} --oem 1', lang='deu+eng')
+        ocr_result = unidecode(ocr_result)
+
+        with open(f"{TEMP_DIR}/file-{page}.txt", "w") as f:
+            f.write(ocr_result)  # type: ignore
+            f.close()
+    except Exception as e:
+        print(f"Error: {e}")
+        pass
+
+
+# Deskew the image
+
+
+def deskew_image(page):
+    result_image = fast_deskew.deskew(f"{TEMP_DIR}/file-{page}.png")
+    cv2.imwrite(f"{TEMP_DIR}/file-{page}.png", result_image)
+
+
+# Clears the temp folder
+def clear_temp():
+    for file in os.listdir(TEMP_DIR):
+        os.remove(f"{TEMP_DIR}\{file}")
+    return
+
+
+# Check if Folder in Temp exists
+if os.path.isdir(TEMP_DIR) == False:
+    os.mkdir(TEMP_DIR)
 
 if __name__ == '__main__':
-    main()
+    # start_time = time.time()
+    # cProfile.run('main()')
 
+    tasks = main()
+    # pprint(tasks)
+    print(json.dumps({'type': 'result', 'data': tasks}))
+
+    # end_time = time.time()
+    # execution_time = end_time - start_time
+    # all_times.append([execution_time, "Total"])
+    # print(f"Script execution time: {execution_time} seconds")
+
+    # print("-------------")
+    # for time in all_times:
+    #   print(f"{time[1]}: {time[0]} seconds")

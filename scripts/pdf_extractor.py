@@ -16,7 +16,6 @@ import time
 # Global Parameters
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 TEMP_DIR = f"{tempfile.gettempdir()}\pruefungs-app"
-all_times = []
 
 # Main function
 
@@ -31,22 +30,32 @@ def main():
 
     # Loop through all the argument paths
     for arg in sys.argv[1:]:
-        # Opens PDF and splits it into images
-        start_time_split = time.time()
-        split_pdf(arg)
-        all_times.append([time.time() - start_time_split, "+ Split"])
 
-        # Do OCR on the images in parallel
-        start_time_ocr = time.time()
+        progress = ((current_file - 1) * 4 + 1) / (total_files * 4) * 100
+        print(json.dumps(
+            {'type': 'progress', 'data': progress, "current_task": f"Schritt 1 von 4 / Datei: {current_file} von {total_files}"}), flush=True)
+
+        # Opens PDF and splits it into images
+        split_pdf(arg)
+        
+        # Print progress of step 1 of 4
+        progress = ((current_file - 1) * 4 + 2) / (total_files * 4) * 100
+        print(json.dumps(
+            {'type': 'progress', 'data': progress, "current_task": f"Schritt 2 von 4 / Datei: {current_file} von {total_files}"}), flush=True)
+
+        # Do OCR on the imes in parallel
         with concurrent.futures.ThreadPoolExecutor() as executor:
             for page in range(len(os.listdir(TEMP_DIR))):
                 executor.submit(do_ocr, page, 1)
 
         # Wait for all tasks to complete
         executor.shutdown()
-        all_times.append([time.time() - start_time_ocr, "+ OCR"])
 
-        start_time_process = time.time()
+        # Print progress of step 3 of 4
+        progress = ((current_file - 1) * 4 + 3) / (total_files * 4) * 100
+        print(json.dumps(
+            {'type': 'progress', 'data': progress, "current_task": f"Schritt 3 von 4 / Datei: {current_file} von {total_files}"}), flush=True)
+
         # Process the information
         # 1. get all the tasks in order
         tasks = get_tasks()
@@ -69,11 +78,12 @@ def main():
                 "filepath": filepath
             })
 
+        # Print progress of step 4 of 4
+        progress = ((current_file - 1) * 4 + 4) / (total_files * 4) * 100
+        print(json.dumps(
+            {'type': 'progress', 'data': progress, "current_task": f"Schritt 4 von 4 / Datei: {current_file} von {total_files}"}), flush=True)
         # Increment the current file counter for the progress update
         current_file += 1
-
-        # Append the time taken to process the information
-        all_times.append([time.time() - start_time_process, "+ Process"])
 
         # Clear the temp folder for the next cycle
         clear_temp()
@@ -119,6 +129,7 @@ def get_pages():
     filenames = sorted(os.listdir(TEMP_DIR), key=lambda x: x[-6:-4])
     for filename in filenames:
         if filename.endswith(".txt"):
+            # with open(os.path.join(TEMP_DIR, filenam  e), "r") as f:
             with open(f"{TEMP_DIR}/{filename}", "r") as f:
                 content = f.read()
                 # matches = re.findall(r"(^\d[.,] Handlungsschritt)", text, re.MULTILINE)
@@ -238,18 +249,5 @@ if os.path.isdir(TEMP_DIR) == False:
     os.mkdir(TEMP_DIR)
 
 if __name__ == '__main__':
-    # start_time = time.time()
-    # cProfile.run('main()')
-
     tasks = main()
-    # pprint(tasks)
-    print(json.dumps({'type': 'result', 'data': tasks}))
-
-    # end_time = time.time()
-    # execution_time = end_time - start_time
-    # all_times.append([execution_time, "Total"])
-    # print(f"Script execution time: {execution_time} seconds")
-
-    # print("-------------")
-    # for time in all_times:
-    #   print(f"{time[1]}: {time[0]} seconds")
+    print(json.dumps({'type': 'result', 'data': tasks}), flush=True)

@@ -51,7 +51,11 @@ export default async function handler(
       res.write(`data: ${JSON.stringify(output)}\n\n`);
     } else if (output.type == "result") {
       res.write(
-        `data: ${JSON.stringify({ type: output.type, tasks: output.data, files: paths })}\n\n`
+        `data: ${JSON.stringify({
+          type: output.type,
+          tasks: output.data,
+          files: paths,
+        })}\n\n`
       );
       axios.delete(
         `http://localhost:8090/api/collections/uploadStorage/records/${id}`

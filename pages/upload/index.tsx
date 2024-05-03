@@ -1,6 +1,6 @@
 import initPocketbase from "@/helpers/initPocketbase";
 import { authData } from "@/types/user";
-import { ArrowBackIosNew } from "@mui/icons-material";
+import { ArrowBackIosNew, FitScreen } from "@mui/icons-material";
 import {
   Box,
   Button,
@@ -11,6 +11,7 @@ import {
   Grid,
   IconButton,
   Input,
+  LinearProgress,
   Modal,
   Slide,
   Table,
@@ -23,9 +24,13 @@ import {
 } from "@mui/material";
 import { TransitionProps } from "@mui/material/transitions";
 import axios from "axios";
+import { log } from "console";
 import { GetServerSidePropsContext } from "next";
 import Head from "next/head";
-import { useState, forwardRef } from "react";
+import { useRouter } from "next/router";
+import React from "react";
+import { useState, forwardRef, useEffect, use } from "react";
+import { reduceEachLeadingCommentRange } from "typescript";
 
 /**
  * Übergang für das Dialogfenster
@@ -51,7 +56,21 @@ export default function Upload({
   const [extract, setExtract] = useState(true);
   const [files, setFiles] = useState<FileList | []>([]);
   const [tasks, setTasks] = useState([]);
+  // Progressbar Variables
+  const [progress, setProgress] = useState(0);
+  const [information, setInformation] = useState("");
+  const router = useRouter();
 
+  /**
+   * Wenn keine Datei ausgewählt ist, wird der Button deaktiviert
+   */
+  const isDisabled = () => {
+    if (files.length === 0) {
+      return true;
+    } else {
+      return false;
+    }
+  };
   /**
    * Kümmert sich um die Dateiauswahl und speichert die Dateien in den State
    * @param event
@@ -74,7 +93,7 @@ export default function Upload({
   /**
    * Kümmert sich um das Ausführen des Python Scripts
    */
-  function runPython() {
+  async function runPython() {
     try {
       console.log("Extracting Tasks from PDFs");
       setWorking(true);
@@ -87,30 +106,39 @@ export default function Upload({
 
       // Send the data to the backend
       axios
-        .post("/api/scripts/runPython", fileData, {
+        .post("/api/storefiles", fileData, {
           method: "POST",
           headers: {
             "Content-Type": "multipart/form-data",
           },
         })
         .then((res) => {
-          let task_data = res.data.tasks[0];
-          let formFiles = res.data.files;
+          const eventSource = new EventSource(
+            `/api/scripts/runPython?id=${res.data.id}`
+          );
 
-          task_data = task_data.substring(1, task_data.length - 2).split("},");
-          task_data = task_data.map((task: any) => {
-            task += "}";
+          eventSource.onmessage = async (event) => {
+            let result = JSON.parse(event.data);
 
-            task = JSON.parse(
-              task.replaceAll(/"/g, '\\"').replaceAll(/'/g, '"')
-            );
-            return task;
-          });
+            if (result.type == "progress") {
+              setProgress(result.data);
+              setInformation(result.current_task);
+            } else if (result.type == "result") {
+              console.log("Result", result.tasks);
+              setTasks(result.tasks);
 
-          setTasks(task_data);
+              await wait(1000);
+              setWorking(false);
+              setExtract(true);
+              setProgress(0);
 
+              eventSource.close();
+            }
+          };
+        })
+        .catch((error) => {
+          console.log(error);
           setWorking(false);
-          setExtract(true);
         });
     } catch (error) {
       console.log(error);
@@ -247,32 +275,39 @@ export default function Upload({
         // Splice the next five tasks from the tasks array
         let tasksToUpload: any = tasks.splice(0, 5);
 
-        // Loop Thrugh Tasks and Upload them to the database
-        for (let i = 0; i < tasksToUpload.length; i++) {
-          const result = await checkExistingTask(tasksToUpload[i]);
+        try {
+          // Loop Thrugh Tasks and Upload them to the database
+          for (let i = 0; i < tasksToUpload.length; i++) {
+            const result = await checkExistingTask(tasksToUpload[i]);
 
-          if (result.data.items.length === 0) {
-            const taskData = new FormData();
-            taskData.append("name", tasksToUpload[i].tasks);
-            taskData.append(
-              "bereich",
-              await getBereichID(tasksToUpload[i].test_type)
-            );
-            taskData.append(
-              "semester",
-              await getSemesterID(tasksToUpload[i].semester)
-            );
-            taskData.append("pruefung", pruefungID);
-            taskData.append("page", tasksToUpload[i].page);
+            if (result.data.items.length === 0) {
+              const taskData = new FormData();
+              taskData.append("name", tasksToUpload[i].task);
+              taskData.append(
+                "bereich",
+                await getBereichID(tasksToUpload[i].test_type)
+              );
+              taskData.append(
+                "semester",
+                await getSemesterID(tasksToUpload[i].semester)
+              );
+              taskData.append("pruefung", pruefungID);
+              taskData.append("page", tasksToUpload[i].page);
 
-            await axios.post(
-              `${process.env.PocketbaseIP}/api/collections/aufgaben/records`,
-              taskData
-            );
+              await axios.post(
+                `${process.env.PocketbaseIP}/api/collections/aufgaben/records`,
+                taskData
+              );
+            }
           }
+        } catch (error) {
+          console.log(error);
+        } finally {
+          router.push("/", "/", {
+            locale: router.locale,
+          });
         }
       }
-
       console.log("Upload  Completed");
     } catch (error) {
       console.log(error);
@@ -284,15 +319,35 @@ export default function Upload({
    * @returns JSX.Element mit den Daten
    */
   const DisplayData = () => {
-    let rows = tasks.map((task: any) => {
-      return (
-        <TableRow key={task.page + task.test_type + task.semester}>
-          <TableCell>{task.tasks}</TableCell>
-          <TableCell>{task.page}</TableCell>
-          <TableCell>{task.test_type}</TableCell>
-          <TableCell>{task.semester}</TableCell>
-        </TableRow>
-      );
+    let rows = tasks.map((task: any, index: number) => {
+      if (index % 5 == 0) {
+        return (
+          <React.Fragment key={task.test_type + task.semester + Math.random()}>
+            <TableRow>
+              <TableCell>
+                <Typography variant="h6">{files[index / 5].name}</Typography>
+              </TableCell>
+            </TableRow>
+            <TableRow>
+              <TableCell>{task.task}</TableCell>
+              <TableCell>{task.page + 1}</TableCell>
+              <TableCell>{task.test_type}</TableCell>
+              <TableCell>{task.semester}</TableCell>
+            </TableRow>
+          </React.Fragment>
+        );
+      } else {
+        return (
+          <TableRow
+            key={task.page + task.test_type + task.semester + Math.random()}
+          >
+            <TableCell>{task.task}</TableCell>
+            <TableCell>{task.page + 1}</TableCell>
+            <TableCell>{task.test_type}</TableCell>
+            <TableCell>{task.semester}</TableCell>
+          </TableRow>
+        );
+      }
     });
 
     return (
@@ -361,7 +416,7 @@ export default function Upload({
 
       {/**
        * Dialog Fenster zum Bestätigen des Uploads
-      */}
+       */}
       <Dialog
         open={confirmOpen}
         TransitionComponent={Transition}
@@ -391,23 +446,21 @@ export default function Upload({
             display: "flex",
             flexDirection: "column",
             alignItems: "center",
+            gap: ".5rem",
           }}
         >
-          <CircularProgress
-            size={100}
-            sx={{
-              backgroundColor: "none",
-              margin: "0 auto",
-              padding: "2rem",
-            }}
-          />
           <Typography variant="h5">
             Die PDFs werden gerade verarbeitet
           </Typography>
-          <Typography variant="h6">Bitte die Seite nicht verlassen.</Typography>
-          <Typography variant="subtitle1">
-            geschätzte Zeit: {files.length * 20} Sekunden
-          </Typography>
+          <Box
+            sx={{
+              padding: "1rem 0",
+              width: "100%",
+            }}
+          >
+            <LinearProgress variant="determinate" value={progress} />
+          </Box>
+          <Typography>{information}</Typography>
         </Box>
       </Modal>
     </>
@@ -418,7 +471,7 @@ export default function Upload({
  * Kümmert sich um das Finden der Semester ID
  * @param name Name des Semesters
  * @returns ID des Semesters
-*/
+ */
 async function getSemesterID(name: string) {
   // split the semester string into year and season
   const splitString = name.split(" ");
@@ -439,7 +492,7 @@ async function getSemesterID(name: string) {
  * Kümmert sich um das Finden der Bereich ID
  * @param name Name des Bereichs
  * @returns ID des Bereichs
-*/
+ */
 async function getBereichID(name: string) {
   // Set Searchparams
   const searchParams = new URLSearchParams({
@@ -457,7 +510,7 @@ async function getBereichID(name: string) {
  * Schaut ob die Aufgaben bereits in der Datenbank sind.
  * @param task Handlungsschritte
  * @returns Aufgaben die bereits in der Datenbank sind
-*/
+ */
 async function checkExistingTask(task: any) {
   const searchParams = new URLSearchParams({
     filter: `name~'${task.tasks}'&&bereich~'${await getBereichID(
@@ -476,7 +529,7 @@ async function checkExistingTask(task: any) {
  * Kümmert sich um die Authentifizierung
  * @param context
  * @returns
- */	
+ */
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   const pb = await initPocketbase(context);
 
@@ -506,4 +559,8 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
       authData: authData.baseModel,
     },
   };
+}
+
+function wait(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }

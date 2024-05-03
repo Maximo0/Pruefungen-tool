@@ -17,6 +17,7 @@ import initPocketbase from "@/helpers/initPocketbase";
 import { useState } from "react";
 import { redirect } from "next/navigation";
 import Head from "next/head";
+import router, { useRouter } from "next/router";
 
 export default function Edit({
   data,
@@ -121,6 +122,7 @@ export default function Edit({
                       bereich,
                       semester,
                     });
+                    
                   }}
                 >
                   Update
@@ -252,7 +254,9 @@ async function updateEntry({
     );
 
     // Redirect to home page
-    redirect("/");
+    router.push("/", "/", {
+      locale: router.locale,
+    });
   } catch (error) {
     console.log(error);
   }

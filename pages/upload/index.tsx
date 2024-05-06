@@ -1,15 +1,13 @@
 import initPocketbase from "@/helpers/initPocketbase";
 import { authData } from "@/types/user";
-import { ArrowBackIosNew, FitScreen } from "@mui/icons-material";
+import { ArrowBackIosNew } from "@mui/icons-material";
 import {
   Box,
   Button,
-  CircularProgress,
   Dialog,
   DialogActions,
   DialogTitle,
   Grid,
-  IconButton,
   Input,
   LinearProgress,
   Modal,
@@ -24,13 +22,11 @@ import {
 } from "@mui/material";
 import { TransitionProps } from "@mui/material/transitions";
 import axios from "axios";
-import { log } from "console";
 import { GetServerSidePropsContext } from "next";
 import Head from "next/head";
 import { useRouter } from "next/router";
 import React from "react";
 import { useState, forwardRef, useEffect, use } from "react";
-import { reduceEachLeadingCommentRange } from "typescript";
 
 /**
  * Übergang für das Dialogfenster

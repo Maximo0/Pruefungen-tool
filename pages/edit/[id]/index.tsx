@@ -15,7 +15,6 @@ import MultiSelectField from "@/components/Form/MultiSelectField";
 import { GetServerSidePropsContext } from "next";
 import initPocketbase from "@/helpers/initPocketbase";
 import { useState } from "react";
-import { redirect } from "next/navigation";
 import Head from "next/head";
 import router, { useRouter } from "next/router";
 

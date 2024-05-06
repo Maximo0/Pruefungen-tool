@@ -1,6 +1,8 @@
 import { NextApiRequest, NextApiResponse } from "next";
 import { PythonShell } from "python-shell";
-import formidable from "formidable";
+import axios from "axios";
+
+export const dynamic = "force-dynamic";
 
 export const config = {
   api: {
@@ -8,36 +10,69 @@ export const config = {
   },
 };
 
+/**
+ * Sammelt alle PDFs und führt das Python Script aus um die Daten zu extrahieren
+ */
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
-  const form = formidable({ multiples: true });
+  res.status(200).setHeader("Content-Type", "text/event-stream");
+  res.setHeader("Content-Encoding", "none");
+  res.setHeader("Cache-Control", "no-cache");
+  res.setHeader("Connection", "keep-alive");
 
-  form.parse(req, (err, fields, files) => {
-    let paths: string[] = [];
+  // Speichert die ID vom request.query Objekt
+  const id = req.query.id;
 
-    if (err) throw err;
+  // Besorgt sich die Datei Pfade aus der Datenbank
+  let paths = await axios
+    .get(
+      `${process.env.PocketbaseIP}/api/collections/uploadStorage/records/${id}`
+    )
+    .then((response) => {
+      return response.data.paths;
+    });
 
-    for (const file of Object.entries(files.file)) {
-      paths.push(file[1].filepath);
+  // Options für Python-Shell
+  let options = {
+    scriptPath: "./scripts/",
+    args: paths,
+    pythonOptions: ["-u"],
+  };
+
+  let pyshell = new PythonShell("pdf_extractor.py", options);
+
+  // Wenn eine Nachricht vom Python-Script kommt
+  pyshell.on("message", function (event) {
+    let output = JSON.parse(event);
+
+    if (output.type == "progress") {
+      res.write(`data: ${JSON.stringify(output)}\n\n`);
+    } else if (output.type == "result") {
+      res.write(
+        `data: ${JSON.stringify({
+          type: output.type,
+          tasks: output.data,
+          files: paths,
+        })}\n\n`
+      );
+      axios.delete(
+        `http://localhost:8090/api/collections/uploadStorage/records/${id}`
+      );
+      res.end();
     }
+  });
 
-    console.log(paths);
+  // Error
+  pyshell.end(function (err, code, signal) {
+    if (err) {
+      console.error(err);
+      res.status(200).end();
+    }
+  });
 
-    let options = {
-      scriptPath: "./scripts/",
-      args: paths,
-    };
-
-    PythonShell.run("pdf_extractor.py", options)
-      .then((result: any) => {
-        // console.log("tasks: ", result);
-        res.status(200).json({ tasks: result, files: paths });
-      })
-      .catch((err) => {
-        console.error(err);
-        res.status(500).end();
-      });
+  req.on("close", () => {
+    res.end();
   });
 }

@@ -1,5 +1,6 @@
 import initPocketbase from "@/helpers/initPocketbase";
 import { authData } from "@/types/user";
+import { ArrowBackIosNew } from "@mui/icons-material";
 import {
   Box,
   Button,
@@ -25,6 +26,11 @@ export default function ChangePassword({
   const [errorMessage, setErrorMessage] = useState("");
   const router = useRouter();
 
+  /**
+   * Ändert das Passwort
+   * @param event FormEvent
+   * @returns
+   */
   async function handleForm(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
@@ -52,7 +58,7 @@ export default function ChangePassword({
         .then((res) => res.json())
         .then((res) => {
           console.log(res);
-          
+
           if (res.status == 400) {
             setError(true);
             if (res.response.data.oldPassword) {
@@ -94,6 +100,10 @@ export default function ChangePassword({
         }}
       >
         <Paper sx={{ padding: "2rem" }}>
+          <Button href="/" sx={{ marginLeft: "-.5rem", marginBottom: "1rem"}}>
+            <ArrowBackIosNew />
+            <Typography>Zurück</Typography>
+          </Button>
           <form onSubmit={handleForm}>
             <FormControl error={error}>
               <Typography variant="h4" textAlign="center">
@@ -141,6 +151,11 @@ export default function ChangePassword({
   );
 }
 
+/**
+ * Kümmert sich um die Authentifizierung
+ * @param context
+ * @returns
+ */
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   const pb = await initPocketbase(context);
 

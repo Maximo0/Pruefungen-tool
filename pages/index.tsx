@@ -1,35 +1,42 @@
-import DBTable from "@/components/Data/DBTable";
 import MultiSelectField from "@/components/Form/MultiSelectField";
-import SelectField from "@/components/Form/SelectField";
-import Loading from "@/components/Loading/Loading";
 import initPocketbase from "@/helpers/initPocketbase";
 import { authData } from "@/types/user";
 import {
   Avatar,
-  AppBar,
   Box,
   Button,
   Chip,
-  Container,
+  Divider,
   IconButton,
   InputBase,
-  Paper,
-  Toolbar,
-  Typography,
+  ListItemIcon,
   Menu,
   MenuItem,
-  Divider,
-  ListItemIcon,
-  Grid,
-  useMediaQuery,
+  Modal,
+  Paper,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableFooter,
+  TableHead,
+  TablePagination,
+  TableRow,
+  TableSortLabel,
+  Toolbar,
+  Typography,
 } from "@mui/material";
-import { Logout, Upload, Password } from "@mui/icons-material";
-import { useTheme, alpha } from "@mui/material/styles";
-import { GetServerSidePropsContext } from "next";
-import Head from "next/head";
-import { useState, useEffect } from "react";
 import useSWR from "swr";
+import EditIcon from "@mui/icons-material/Edit";
+import { GetServerSidePropsContext } from "next";
+import { useEffect, useState } from "react";
+import { Logout, Upload, Password } from "@mui/icons-material";
 import Link from "next/link";
+
+// Fetcher for useSWR
+const fetcher = (...args: [RequestInfo, RequestInit?]): Promise<any> => {
+  return fetch(...args).then((res: Response) => res.json());
+};
 
 function getCategoryParams(params: any[]) {
   if (params.length <= 0) return "";
@@ -39,173 +46,88 @@ function getCategoryParams(params: any[]) {
   return `&&(${query})`;
 }
 
-function getSemesterParams(params: any[]) {
-  if (params.length <= 0) return "";
-  const query = params
-    .map((param: string) => {
-      let paramArray = param.split(" ");
-      return `(semester.semester='${paramArray[0]}'&&semester.jahr=${paramArray[1]})`;
-    })
-    .join("||");
-  return `&&(${query})`;
+interface Data {
+  id: any;
+  aufgabe: string;
+  kategorie: string;
+  bereich: number;
+  semester: string;
 }
 
-// Fetcher for useSWR
-const fetcher = (...args: [RequestInfo, RequestInit?]): Promise<any> => {
-  return fetch(...args).then((res: Response) => res.json());
-};
+interface HeadCell {
+  disablePadding: boolean;
+  id: keyof Data;
+  label: string;
+  alignRight: boolean;
+}
+const headCells: readonly HeadCell[] = [
+  { id: "aufgabe", disablePadding: false, label: "Aufgabe", alignRight: false },
+  {
+    id: "kategorie",
+    disablePadding: false,
+    label: "Kategorie",
+    alignRight: true,
+  },
+  { id: "bereich", disablePadding: false, label: "Bereich", alignRight: true },
+  {
+    id: "semester",
+    disablePadding: false,
+    label: "Semester",
+    alignRight: true,
+  },
+];
 
-export default function Home({
-  isLoggedIn,
-  authData,
-}: {
-  isLoggedIn: boolean;
-  authData: authData;
-}) {
-  // Fetch data from api route to build the task table
-  const tableData = useSWR("/api/categories", fetcher);
-  const theme = useTheme();
-
-  // Searchbar param
-  const [query, setQuery] = useState("");
-  // Task table params
-  const [tasks, setTasks] = useState([]);
-  const [taskAmount, setTaskAmount] = useState(30);
-  const [maxTasks, setMaxTasks] = useState(-1);
-  // Filter params
-  const [selectedCategories, setSelectedCategories] = useState([]);
-  const [selectedBereich, setSelectedBereich] = useState("");
-  const [selectedSemester, setSelectedSemester] = useState([]);
-  // Loading state
-  const [isLoading, setLoading] = useState(true);
-
-  // Profile Icon functions
+/**
+ * TableToolbar component
+ * @returns
+ */
+function TaskTableToolbar({ authData }: { authData: authData }) {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const open = Boolean(anchorEl);
+
   const handleClick = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
   };
+
   const handleClose = () => {
     setAnchorEl(null);
   };
 
-  const matches = useMediaQuery((theme: any) => theme.breakpoints.down("sm"))
+  return (
+    <>
+      <Toolbar
+        sx={{ pl: { sm: 2 }, pr: { xs: 1, sm: 1 }, bgcolor: "lightblue" }}
+      >
+        <Typography variant="h6" id="tableTitle" component="div">
+          Prüfungs Aufgaben
+        </Typography>
 
-  // Show more Button component
-  const ShowMoreButton = () => {
-    return (
-      <Box textAlign="center">
-        <Button
-          sx={{ width: "20rem", padding: ".75rem" }}
-          onClick={() => {
-            setTaskAmount(taskAmount + 30);
+        <Box
+          sx={{
+            flexGrow: 1,
+            display: "flex",
+            flexDirection: "row-reverse",
           }}
         >
-          Mehr laden
-        </Button>
-      </Box>
-    );
-  };
-
-  // Search for tasks using the query param
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      // Build the URLSearchParams object
-      const params = new URLSearchParams({
-        page: "1",
-        perPage: taskAmount.toString(),
-        expand: "semester,bereich,kategorien,pruefung",
-        filter: `name~'${query}'&&bereich.name~'${selectedBereich}'${getSemesterParams(
-          selectedSemester
-        )}${getCategoryParams(selectedCategories)}`,
-      });
-
-      // Fetch the data
-      fetch(
-        `${process.env.PocketbaseIP}/api/collections/aufgaben/records?${params}`
-      )
-        .then((res) => {
-          return res.json();
-        })
-        .then((data) => {
-          // Set the data
-          setTasks(data?.items);
-          setMaxTasks(data?.totalItems);
-          if (data?.items.length < 30) setTaskAmount(30);
-          setLoading(false);
-        })
-        .catch((error) => {
-          console.log(error);
-        });
-    }, 400);
-
-    return () => clearTimeout(timer);
-  }, [
-    query,
-    taskAmount,
-    selectedCategories,
-    selectedBereich,
-    selectedSemester,
-  ]);
-
-  // Change semester params when semester is selected
-  useEffect(() => {
-    getSemesterParams(selectedSemester);
-  }, [selectedSemester]);
-
-  // Clear all filters
-  function clearFilters() {
-    setSelectedCategories([]);
-    setSelectedBereich("");
-    setSelectedSemester([]);
-  }
-
-  return (
-    <Box>
-      <AppBar position="sticky">
-        <Toolbar sx={{ gap: "1rem" }}>
-          <Box sx={{ flexGrow: 1 }} />
-          <Paper sx={{ flexGrow: 2 }}>
-            <InputBase
-              placeholder="Aufgaben suchen"
-              sx={{
-                padding: "0.3rem",
-                width: "100%",
-                backgroundColor: alpha(theme.palette.primary.main, 0.25),
-              }}
-              value={query}
-              onChange={(e) => {
-                setQuery(e.target.value);
-              }}
-            />
-          </Paper>
-          <Box
-            sx={{
-              flexGrow: 1,
-              display: "flex",
-              flexDirection: "row-reverse",
-            }}
+          <IconButton
+            onClick={handleClick}
+            size="small"
+            sx={{ ml: 2 }}
+            aria-controls={open ? "account-menu" : undefined}
+            aria-haspopup="true"
+            aria-expanded={open ? "true" : undefined}
           >
-            <IconButton
-              onClick={handleClick}
-              size="small"
-              sx={{ ml: 2 }}
-              aria-controls={open ? "account-menu" : undefined}
-              aria-haspopup="true"
-              aria-expanded={open ? "true" : undefined}
-            >
-              <Avatar sx={{ width: 32, height: 32 }}></Avatar>
-            </IconButton>
-          </Box>
-        </Toolbar>
-      </AppBar>
+            <Avatar sx={{ width: 32, height: 32 }}></Avatar>
+          </IconButton>
+        </Box>
+      </Toolbar>
 
+      {/* Menu */}
       <Menu
         anchorEl={anchorEl}
         id="account-menu"
         open={open}
         onClose={handleClose}
-        // onClick={handleClose}
         PaperProps={{
           elevation: 0,
           sx: {
@@ -252,7 +174,7 @@ export default function Home({
         <MenuItem
           component={Link}
           href="/change-password"
-          disabled={authData.id == "e1mpp76y4mloqp0"}
+          disabled={authData.role == "gast"}
         >
           <ListItemIcon>
             <Password fontSize="small" />
@@ -266,125 +188,344 @@ export default function Home({
           Logout
         </MenuItem>
       </Menu>
-
-
-      <Grid container spacing={0} direction="column" alignItems="center" justifyContent="center" maxWidth={1200} margin="auto">
-        <Grid item xs={12} md={8}>
-          <Typography variant="h4" component="h1" sx={{margin: "1rem 0"}}>
-            Prüfungen
-          </Typography>
-        </Grid>
-        {tableData.data != undefined ? (
-          <Grid
-            item
-            container
-            spacing={2}
-            sx={{
-              padding: "1rem 3rem",
-            }} 
-            direction={matches ? "column" : "row"}
-          >
-            <Grid item xs={4}>
-              <MultiSelectField
-                item={selectedCategories}
-                list={tableData.data.categories}
-                label="Kategorien"
-                onChange={(event: any) => {
-                  const {
-                    target: { value },
-                  } = event;
-                  setSelectedCategories(
-                    typeof value === "string" ? value.split(",") : value
-                  );
-                }}
-              />
-            </Grid>
-            <Grid item xs={4}>
-              <SelectField
-                item={selectedBereich}
-                list={tableData.data.bereich}
-                label="Bereich"
-                onChange={(event: any) => {
-                  setSelectedBereich(event.target.value);
-                }}
-                nullOption={true}
-              />
-            </Grid>
-            <Grid item xs={4}>
-              <MultiSelectField
-                item={selectedSemester}
-                list={tableData.data.semester}
-                label="Semester"
-                onChange={(event) => {
-                  const {
-                    target: { value },
-                  } = event;
-                  setSelectedSemester(
-                    typeof value === "string" ? value.split(",") : value
-                  );
-                }}
-              />
-            </Grid>
-          </Grid>
-        ) : null}
-
-
-        <FilterList
-          list={{ selectedCategories, selectedSemester }}
-          clearFilters={clearFilters}
-        />
-
-
-        {isLoading || tableData.isLoading ? (
-          <Loading />
-        ) : (
-          <Container className="tableContent">
-            <DBTable data={tasks} authData={authData} />
-            {tasks.length < maxTasks && ShowMoreButton()}
-          </Container>
-        )}
-      </Grid>
-    </Box>
+    </>
   );
 }
 
-function FilterList({
-  button = true,
-  list,
+type Order = "asc" | "desc";
+
+interface TaskTableProps {
+  order: Order;
+  orderBy: string;
+}
+
+/**
+ * Tablehead component
+ * @param props
+ * @returns
+ */
+function TaskTableHead(props: TaskTableProps, authData: authData) {
+  const { order, orderBy } = props;
+
+  return (
+    <TableHead>
+      <TableRow>
+        {headCells.map((headCell) => (
+          <TableCell
+            key={headCell.id}
+            align={headCell.alignRight ? "right" : "left"}
+            padding={headCell.disablePadding ? "none" : "normal"}
+            sx={{ backgroundColor: "lightBlue" }}
+          >
+            {headCell.label}
+          </TableCell>
+        ))}
+        {authData.role != "gast" && (
+          <TableCell sx={{ backgroundColor: "lightBlue" }}></TableCell>
+        )}
+      </TableRow>
+    </TableHead>
+  );
+}
+
+/**
+ * TaskTableFilter component
+ * @returns
+ */
+function TaskTableFilter({
+  query,
+  setQuery,
+  DBdata,
+  categories,
+  setCategories,
   clearFilters,
 }: {
-  button?: boolean;
-  list: any;
+  query: string;
+  setQuery: React.Dispatch<React.SetStateAction<string>>;
+  DBdata: any;
+  categories: any;
+  setCategories: any;
   clearFilters: any;
 }) {
-  if (list.selectedCategories.length + list.selectedSemester.length <= 0)
-    return <Box></Box>;
   return (
     <Box
       sx={{
         display: "flex",
-        alignItems: "center",
-        flexDirection: "column",
+        flexWrap: "wrap",
+        gap: "1rem",
+        p: 2,
       }}
     >
+      <Paper sx={{ display: "flex", flexGrow: 2 }}>
+        <InputBase
+          sx={{ padding: "0.3rem", width: "100%" }}
+          placeholder="Aufgaben suchen"
+          value={query}
+          onChange={(e) => {
+            setQuery(e.target.value);
+          }}
+        />
+      </Paper>
       <Box
+        sx={{ display: "flex", flexGrow: 1, gap: ".5rem", maxWidth: "25vw" }}
+      >
+        <MultiSelectField
+          item={categories}
+          list={DBdata}
+          label={"Kategorien"}
+          onChange={(event: any) => {
+            const {
+              target: { value },
+            } = event;
+            setCategories(typeof value === "string" ? value.split(",") : value);
+          }}
+        />
+      </Box>
+      {categories.length > 0 ? (
+        <Box
+          sx={{
+            display: "flex",
+            flexDirection: "column",
+            flexShrink: 1,
+            gap: ".25rem",
+            flexBasis: "100%",
+          }}
+        >
+          <Typography variant="h6">
+            Filter {<Button onClick={clearFilters}>Clear Filters</Button>}
+          </Typography>
+          <Box
+            sx={{
+              display: "flex",
+              flexWrap: "wrap",
+              flexShrink: 1,
+              gap: ".25rem",
+              flexBasis: "100%",
+            }}
+          >
+            {categories.map((item: string) => (
+              <Chip
+                key={item}
+                label={item}
+                onDelete={() => {
+                  setCategories((prevCategories: string[]) =>
+                    prevCategories.filter((category) => category !== item)
+                  );
+                }}
+              />
+            ))}
+          </Box>
+        </Box>
+      ) : null}
+    </Box>
+  );
+}
+
+export default function TaskTableView({
+  isLoggedIn,
+  authData,
+}: {
+  isLoggedIn: boolean;
+  authData: authData;
+}) {
+  const [order, setOrder] = useState<"asc" | "desc">("asc");
+  const [orderBy, setOrderBy] = useState<string>("semester");
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(20);
+  const [count, setCount] = useState(0);
+
+  // Task related states
+  const [query, setQuery] = useState("");
+  const [tasks, setTasks] = useState([]);
+
+  // Filter Options
+  const DBdata = useSWR("/api/categories", fetcher);
+  const [categories, setCategories] = useState([]);
+
+  // Modal states
+  const [open, setOpen] = useState(false);
+  const [linkParams, setLinkParams] = useState(["", "", ""]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      const params = new URLSearchParams({
+        page: (page + 1).toString(),
+        perPage: rowsPerPage.toString(),
+        expand: "semester,bereich,kategorien,pruefung",
+        filter: `name~'${query}'${getCategoryParams(categories)}`,
+      });
+
+      fetch(
+        `${process.env.PocketbaseIP}/api/collections/aufgaben/records?${params}`
+      ).then((response) => {
+        response.json().then((data) => {
+          setTasks(data.items);
+          setCount(data.totalItems);
+        });
+      });
+    }, 400);
+
+    return () => clearTimeout(timer);
+  }, [query, page, categories]);
+
+  /**
+   * Handle open modal
+   */
+  const handleOpen = () => {
+    setOpen(true);
+  };
+  /**
+   * Handle close modal
+   */
+  const handleClose = () => {
+    setOpen(false);
+  };
+
+  // Styles for table cell
+  const styles = {
+    cursor: "pointer",
+    transition: "250ms",
+    "&:hover": {
+      background: "#f6f6f6",
+    },
+  };
+
+  /**
+   * Leert die Filter und setzt die seiten zahl auf 0
+   */
+  function clearFilters() {
+    setCategories([]);
+    setPage(0);
+  }
+
+  /**
+   * Handle page change
+   * @param event
+   * @param newPage
+   */
+  const handlePageChange = (event: unknown, newPage: number) => {
+    setPage(newPage);
+  };
+
+  /**
+   * TaskItem component
+   * @param task
+   * @returns
+   */
+  function TaskItem(task: any) {
+    let categoryField;
+    if (!task.expand.kategorien) {
+      categoryField = "";
+    } else {
+      const kategorien = task.expand.kategorien.map((kategorie: any) => {
+        return kategorie.name;
+      });
+      categoryField = kategorien.join(", ");
+    }
+
+    return (
+      <TableRow key={task.id}>
+        <TableCell
+          sx={styles}
+          onClick={() => {
+            setLinkParams([
+              task.expand.pruefung.id,
+              task.expand.pruefung.file,
+              task.page,
+            ]);
+            handleOpen();
+          }}
+        >
+          {task.name}
+        </TableCell>
+        <TableCell align="right">{categoryField}</TableCell>
+        <TableCell align="right">{task.expand.bereich.name}</TableCell>
+        <TableCell align="right">{`${task.expand.semester.semester} ${task.expand.semester.jahr}`}</TableCell>
+        {authData.role != "gast" && (
+          <TableCell sx={{ padding: ".5rem" }}>
+            <IconButton href={`/edit/${task.id}`}>
+              <EditIcon />
+            </IconButton>
+          </TableCell>
+        )}
+      </TableRow>
+    );
+  }
+
+  /**
+   * Main JSX Component
+   * @returns
+   */
+  return (
+    <Box sx={{ width: "100%" }}>
+      <Paper
         sx={{
+          width: "100%",
           display: "flex",
-          alignItems: "center",
           flexDirection: "column",
+          height: "100vh",
         }}
       >
-        <Typography variant="h6">Selected Filters</Typography>
-        {button && <Button onClick={clearFilters}>Clear Filters</Button>}
-      </Box>
-      <Box sx={{ display: "flex", alignItems: "center", m: 1, gap: ".5rem", flexWrap: "wrap" }}>
-        {list.selectedCategories.map((item: string) => {
-          return <Chip key={item} label={item} />;
-        })}
-        {list.selectedSemester.map((item: string) => {
-          return <Chip key={item} label={item} />;
-        })}
-      </Box>
+        <TaskTableToolbar authData={authData} />
+        {DBdata.data != undefined ? (
+          <TaskTableFilter
+            query={query}
+            setQuery={setQuery}
+            DBdata={DBdata.data.categories}
+            categories={categories}
+            setCategories={setCategories}
+            clearFilters={clearFilters}
+          />
+        ) : null}
+        <Modal open={open} onClose={handleClose}>
+          <Box
+            sx={{
+              position: "absolute",
+              top: "50%",
+              left: "50%",
+              transform: "translate(-50%, -50%)",
+              width: "60vw",
+              height: "90vh",
+            }}
+          >
+            <embed
+              height="100%"
+              width="100%"
+              src={`${process.env.PocketbaseIP}/api/files/pruefungen/${
+                linkParams[0]
+              }/${linkParams[1]}#view=fit&page=${parseInt(linkParams[2]) + 1}`}
+              style={{ userSelect: "none" }}
+            />
+          </Box>
+        </Modal>
+        <TableContainer sx={{ flexGrow: 1 }}>
+          <Table stickyHeader aria-label="sticky table">
+            <TaskTableHead
+              order={order}
+              orderBy={orderBy}
+              // authData={authData}
+            />
+            <TableBody>
+              {tasks.map((task: any) => {
+                return TaskItem(task);
+              })}
+            </TableBody>
+          </Table>
+        </TableContainer>
+        <TablePagination
+          sx={{
+            flexShrink: 1,
+            overflow: "visible",
+            borderTop: "1px solid gray",
+          }}
+          component="div"
+          count={count}
+          page={page}
+          rowsPerPage={rowsPerPage}
+          rowsPerPageOptions={[]}
+          onPageChange={handlePageChange}
+        />
+      </Paper>
     </Box>
   );
 }

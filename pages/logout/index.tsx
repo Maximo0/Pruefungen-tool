@@ -3,6 +3,9 @@ import { GetServerSidePropsContext } from "next";
 
 export default function LogoutPage() {}
 
+/**
+ * Leeren des AuthStore und Weiterleitung auf die Login-Seite
+*/
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   const pb = await initPocketbase(context);
 
@@ -16,8 +19,6 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   }
 
   pb.authStore.clear();
-
-  // context.res?.setHeader("set-cookie", pb.authStore.exportToCookie());
 
   return {
     redirect: {

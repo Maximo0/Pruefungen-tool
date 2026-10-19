@@ -35,8 +35,7 @@ Dieses Projekt wurde im Rahmen meiner Ausbildung bei **Pfefferwerk** entwickelt.
 ## Voraussetzungen
 
 - [Node.js](https://nodejs.org/) (empfohlen: 18 oder neuer)
-- Python 3 mit den Bibliotheken des Scripts: `[z. B. PyPDF2 / pdfplumber, bitte ergänzen]`
-- Eine laufende [PocketBase](https://pocketbase.io/)-Instanz
+- Python 3
 
 ## Installation
 
@@ -49,16 +48,22 @@ cd Pruefungen-tool
 npm install
 
 # Python-Abhängigkeiten installieren
-pip install [benötigte Pakete]
+pip install -r scripts/requirements.txt
 ```
 
-## Konfiguration
+## PocketBase
 
-Lege eine Datei `.env.local` im Projektordner an:
+Das Projekt verwendet eine PocketBase Datenbank um die Aufgaben zu speichern.
+In den Releases ist eine Docker Datei mit einer vorbereiteten Datenbank enthalten.
 
-```env
-# [Bitte an dein Projekt anpassen]
-NEXT_PUBLIC_POCKETBASE_URL=http://127.0.0.1:8090
+Docker Image erstellen mit der bereitgestellten Docker Datei
+```
+docker build -t pocketbase
+```
+
+Das Docker Image starten
+```
+docker run --name Pocketbase -p 8080:8080 pocketbase
 ```
 
 ## Entwicklung starten
@@ -92,7 +97,3 @@ Pruefungen-tool/
 ## Hinweis zu Prüfungsunterlagen
 
 Die Prüfungs-PDFs sind nicht Teil dieses Repositories. Bitte nutze nur Unterlagen, die du rechtmäßig erhalten hast, und beachte die Urheberrechte der IHK.
-
-## Lizenz
-
-[z. B. MIT-Lizenz, bitte ergänzen oder Abschnitt entfernen]

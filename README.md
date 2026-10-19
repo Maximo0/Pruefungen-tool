@@ -1,38 +1,98 @@
-This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# Prüfungen-Tool
 
-## Getting Started
+Eine Webanwendung, mit der du dich gezielter auf deine **IHK-Prüfung** vorbereiten kannst. Statt komplette Prüfungs-PDFs durchzuarbeiten, extrahiert das Tool die Aufgabenstellungen und lässt dich gezielt nach relevanten Aufgaben suchen.
 
-First, run the development server:
+## Hintergrund
+
+Dieses Projekt wurde im Rahmen meiner Ausbildung bei **Pfefferwerk** entwickelt. Ziel war es, ein praxisnahes Tool zu bauen, das die eigene Prüfungsvorbereitung effizienter macht, und dabei den gesamten Weg von der Idee bis zur fertigen Anwendung selbst umzusetzen.
+
+## Features
+
+- 📄 **PDF-Upload**: Prüfungs-PDFs direkt über die Weboberfläche hochladen
+- ✂️ **Automatische Extraktion**: Ein Python-Script liest die PDFs aus und zieht die Aufgabenstellungen heraus
+- 🔍 **Gezielte Suche**: Relevante Aufgaben schnell finden und effizienter lernen
+- 💾 **Datenspeicherung**: Aufgaben werden über PocketBase gespeichert
+- 🎨 **Modernes UI**: Umgesetzt mit Material UI
+
+## Tech-Stack
+
+| Bereich | Technologie |
+| --- | --- |
+| Frontend | [Next.js](https://nextjs.org/) 13, React 18, TypeScript |
+| UI | [Material UI](https://mui.com/) |
+| Datenbank | [PocketBase](https://pocketbase.io/) |
+| PDF-Verarbeitung | Python-Script (Aufruf via `python-shell`) |
+| Datei-Upload | Formidable |
+| Deployment | Docker |
+
+## So funktioniert es
+
+1. Du lädst eine Prüfungs-PDF über die Seite hoch.
+2. Next.js nimmt die Datei entgegen (`formidable`) und startet das Python-Script aus `scripts/` (`python-shell`).
+3. Das Script extrahiert die Aufgabenstellungen aus der PDF.
+4. Die Aufgaben werden gespeichert und sind über die Suche abrufbar.
+
+## Voraussetzungen
+
+- [Node.js](https://nodejs.org/) (empfohlen: 18 oder neuer)
+- Python 3 mit den Bibliotheken des Scripts: `[z. B. PyPDF2 / pdfplumber, bitte ergänzen]`
+- Eine laufende [PocketBase](https://pocketbase.io/)-Instanz
+
+## Installation
+
+```bash
+# Repository klonen
+git clone https://github.com/Maximo0/Pruefungen-tool.git
+cd Pruefungen-tool
+
+# Node-Abhängigkeiten installieren
+npm install
+
+# Python-Abhängigkeiten installieren
+pip install [benötigte Pakete]
+```
+
+## Konfiguration
+
+Lege eine Datei `.env.local` im Projektordner an:
+
+```env
+# [Bitte an dein Projekt anpassen]
+NEXT_PUBLIC_POCKETBASE_URL=http://127.0.0.1:8090
+```
+
+## Entwicklung starten
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Anschließend ist die Seite unter [http://localhost:3000](http://localhost:3000) erreichbar.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Mit Docker starten
 
-[API routes](https://nextjs.org/docs/api-routes/introduction) can be accessed on [http://localhost:3000/api/hello](http://localhost:3000/api/hello). This endpoint can be edited in `pages/api/hello.ts`.
+```bash
+docker build -t pruefungen-tool .
+docker run -p 3000:3000 pruefungen-tool
+```
 
-The `pages/api` directory is mapped to `/api/*`. Files in this directory are treated as [API routes](https://nextjs.org/docs/api-routes/introduction) instead of React pages.
+## Projektstruktur
 
-This project uses [`next/font`](https://nextjs.org/docs/basic-features/font-optimization) to automatically optimize and load Inter, a custom Google Font.
+```
+Pruefungen-tool/
+├── components/   # Wiederverwendbare React-Komponenten
+├── helpers/      # Hilfsfunktionen
+├── pages/        # Next.js-Seiten und API-Routen
+├── scripts/      # Python-Script zur PDF-Verarbeitung
+├── types/        # TypeScript-Typdefinitionen
+├── Dockerfile
+└── package.json
+```
 
-## Learn More
+## Hinweis zu Prüfungsunterlagen
 
-To learn more about Next.js, take a look at the following resources:
+Die Prüfungs-PDFs sind nicht Teil dieses Repositories. Bitte nutze nur Unterlagen, die du rechtmäßig erhalten hast, und beachte die Urheberrechte der IHK.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Lizenz
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js/) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/deployment) for more details.
+[z. B. MIT-Lizenz, bitte ergänzen oder Abschnitt entfernen]
